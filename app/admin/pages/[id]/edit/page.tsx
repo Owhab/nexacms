@@ -8,15 +8,13 @@ import { useAppDispatch, useAppSelector } from '@/store'
 import { fetchPage, updatePage, fetchSectionTemplates, addSection, deleteSection, updateSection } from '@/store/pagesSlice'
 import { ArrowLeftIcon, PlusIcon, TrashIcon, EyeIcon, SaveIcon, EditIcon } from 'lucide-react'
 
-// Section Editors
-import { HeroSectionEditor } from '@/components/admin/section-editors/HeroSectionEditor'
-import { TextBlockEditor } from '@/components/admin/section-editors/TextBlockEditor'
-import { ImageTextEditor } from '@/components/admin/section-editors/ImageTextEditor'
+// Section Management
+import { SectionRenderer } from '@/lib/sections/renderer'
+import { getSectionConfig } from '@/lib/sections/registry'
+import { SectionLibrary } from '@/components/admin/SectionLibrary'
 
-// Section Previews
-import { HeroSectionPreview } from '@/components/admin/section-previews/HeroSectionPreview'
-import { TextBlockPreview } from '@/components/admin/section-previews/TextBlockPreview'
-import { ImageTextPreview } from '@/components/admin/section-previews/ImageTextPreview'
+// Page Preview Modal
+import { PagePreviewModal } from '@/components/admin/PagePreviewModal'
 
 interface PageEditorProps {
     params: { id: string }
@@ -40,6 +38,7 @@ export default function PageEditor({ params }: PageEditorProps) {
     const [showSectionLibrary, setShowSectionLibrary] = useState(false)
     const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
     const [editingSection, setEditingSection] = useState<string | null>(null)
+    const [showPreview, setShowPreview] = useState(false)
 
     const canPublish = user?.role === 'ADMIN'
 
@@ -83,19 +82,17 @@ export default function PageEditor({ params }: PageEditorProps) {
         }))
     }
 
-    const handleAddSection = async (templateId: string) => {
+    const handleAddSection = async (sectionId: string) => {
         if (!currentPage) return
 
-        const template = sectionTemplates.find(t => t.id === templateId)
-        if (!template) return
+        const sectionConfig = getSectionConfig(sectionId)
+        if (!sectionConfig) return
 
         await dispatch(addSection({
             pageId: currentPage.id,
-            sectionTemplateId: templateId,
-            props: JSON.parse(template.defaultProps)
+            sectionTemplateId: sectionId,
+            props: sectionConfig.defaultProps
         }))
-
-        setShowSectionLibrary(false)
     }
 
     const handleDeleteSection = async (sectionId: string) => {
@@ -124,69 +121,41 @@ export default function PageEditor({ params }: PageEditorProps) {
         setEditingSection(null)
     }
 
+    const handlePublishToggle = async () => {
+        if (!currentPage) return
+
+        const newStatus = currentPage.status === 'PUBLISHED' ? 'DRAFT' : 'PUBLISHED'
+
+        await dispatch(updatePage({
+            id: currentPage.id,
+            status: newStatus,
+        }))
+    }
+
     const renderSectionEditor = (section: any) => {
         const props = JSON.parse(section.props)
 
-        switch (section.sectionTemplate.componentName) {
-            case 'HeroSection':
-                return (
-                    <HeroSectionEditor
-                        props={props}
-                        onSave={(newProps) => handleSaveSection(section.id, newProps)}
-                        onCancel={handleCancelEdit}
-                    />
-                )
-            case 'TextBlock':
-                return (
-                    <TextBlockEditor
-                        props={props}
-                        onSave={(newProps) => handleSaveSection(section.id, newProps)}
-                        onCancel={handleCancelEdit}
-                    />
-                )
-            case 'ImageText':
-                return (
-                    <ImageTextEditor
-                        props={props}
-                        onSave={(newProps) => handleSaveSection(section.id, newProps)}
-                        onCancel={handleCancelEdit}
-                    />
-                )
-            default:
-                return (
-                    <div className="p-4 bg-gray-100 rounded">
-                        <p className="text-sm text-gray-600">No editor available for this section type.</p>
-                        <Button onClick={handleCancelEdit} className="mt-2">Close</Button>
-                    </div>
-                )
-        }
+        return (
+            <SectionRenderer
+                sectionId={section.sectionTemplate.id}
+                props={props}
+                mode="editor"
+                onSave={(newProps) => handleSaveSection(section.id, newProps)}
+                onCancel={handleCancelEdit}
+            />
+        )
     }
 
     const renderSectionPreview = (section: any) => {
         const props = JSON.parse(section.props)
 
-        switch (section.sectionTemplate.componentName) {
-            case 'HeroSection':
-                return <HeroSectionPreview props={props} />
-            case 'TextBlock':
-                return <TextBlockPreview props={props} />
-            case 'ImageText':
-                return <ImageTextPreview props={props} />
-            default:
-                return (
-                    <div className="p-6 bg-gray-100 rounded-lg text-center">
-                        <h4 className="font-medium text-gray-900 mb-2">
-                            {section.sectionTemplate.name}
-                        </h4>
-                        <p className="text-sm text-gray-500 mb-4">
-                            Component: {section.sectionTemplate.componentName}
-                        </p>
-                        <pre className="text-xs text-left bg-white p-4 rounded border overflow-auto">
-                            {JSON.stringify(props, null, 2)}
-                        </pre>
-                    </div>
-                )
-        }
+        return (
+            <SectionRenderer
+                sectionId={section.sectionTemplate.id}
+                props={props}
+                mode="preview"
+            />
+        )
     }
 
     if (loading) {
@@ -228,22 +197,71 @@ export default function PageEditor({ params }: PageEditorProps) {
                     </div>
 
                     <div className="flex items-center space-x-3">
+                        {/* Status Badge */}
+                        <div className="flex items-center space-x-2">
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${currentPage.status === 'PUBLISHED'
+                                ? 'bg-green-100 text-green-800'
+                                : currentPage.status === 'SCHEDULED'
+                                    ? 'bg-blue-100 text-blue-800'
+                                    : 'bg-yellow-100 text-yellow-800'
+                                }`}>
+                                {currentPage.status}
+                            </span>
+                        </div>
+
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowPreview(true)}
+                        >
+                            <EyeIcon className="mr-2 h-4 w-4" />
+                            Preview
+                        </Button>
+
                         {currentPage.status === 'PUBLISHED' && (
-                            <a
-                                href={`/storefront${currentPage.slug}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                <Button variant="outline" size="sm">
-                                    <EyeIcon className="mr-2 h-4 w-4" />
-                                    Preview
-                                </Button>
-                            </a>
+                            <>
+                                <a
+                                    href={`/pages${currentPage.slug}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    <Button variant="outline" size="sm">
+                                        <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                        </svg>
+                                        View Public
+                                    </Button>
+                                </a>
+                                <a
+                                    href={`/storefront${currentPage.slug}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    <Button variant="outline" size="sm">
+                                        <EyeIcon className="mr-2 h-4 w-4" />
+                                        Storefront
+                                    </Button>
+                                </a>
+                            </>
                         )}
+
                         <Button onClick={handleSave} disabled={loading}>
                             <SaveIcon className="mr-2 h-4 w-4" />
-                            Save Changes
+                            Save
                         </Button>
+
+                        {canPublish && (
+                            <Button
+                                onClick={handlePublishToggle}
+                                disabled={loading}
+                                className={currentPage.status === 'PUBLISHED'
+                                    ? 'bg-red-600 hover:bg-red-700 text-white'
+                                    : 'bg-green-600 hover:bg-green-700 text-white'
+                                }
+                            >
+                                {currentPage.status === 'PUBLISHED' ? 'Unpublish' : 'Publish'}
+                            </Button>
+                        )}
                     </div>
                 </div>
             </div>
@@ -350,37 +368,22 @@ export default function PageEditor({ params }: PageEditorProps) {
                                 <h3 className="text-md font-medium text-gray-900">Sections</h3>
                                 <Button
                                     size="sm"
-                                    onClick={() => setShowSectionLibrary(!showSectionLibrary)}
+                                    onClick={() => setShowSectionLibrary(true)}
                                 >
                                     <PlusIcon className="h-4 w-4" />
                                 </Button>
                             </div>
 
-                            {showSectionLibrary && (
-                                <div className="mb-4 p-3 bg-gray-50 rounded-md">
-                                    <h4 className="text-sm font-medium text-gray-700 mb-2">Add Section</h4>
-                                    <div className="space-y-2">
-                                        {sectionTemplates.map((template) => (
-                                            <button
-                                                key={template.id}
-                                                onClick={() => handleAddSection(template.id)}
-                                                className="w-full text-left px-3 py-2 text-sm bg-white border border-gray-200 rounded hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            >
-                                                <div className="font-medium">{template.name}</div>
-                                                {template.description && (
-                                                    <div className="text-xs text-gray-500">{template.description}</div>
-                                                )}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
+
 
                             <div className="space-y-2">
                                 {currentPage.sections.map((section, index) => (
                                     <div
                                         key={section.id}
-                                        className="flex items-center justify-between p-3 bg-gray-50 rounded border"
+                                        className={`flex items-center justify-between p-3 rounded border transition-colors ${editingSection === section.id
+                                            ? 'bg-blue-50 border-blue-200'
+                                            : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                                            }`}
                                     >
                                         <div className="flex-1">
                                             <div className="text-sm font-medium text-gray-900">
@@ -390,14 +393,26 @@ export default function PageEditor({ params }: PageEditorProps) {
                                                 Order: {section.order}
                                             </div>
                                         </div>
-                                        <Button
-                                            size="sm"
-                                            variant="ghost"
-                                            onClick={() => handleDeleteSection(section.id)}
-                                            className={deleteConfirm === section.id ? 'text-red-600' : ''}
-                                        >
-                                            <TrashIcon className="h-4 w-4" />
-                                        </Button>
+                                        <div className="flex space-x-1">
+                                            <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                onClick={() => handleEditSection(section.id)}
+                                                className={editingSection === section.id ? 'text-blue-600' : ''}
+                                                title="Edit section"
+                                            >
+                                                <EditIcon className="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                onClick={() => handleDeleteSection(section.id)}
+                                                className={deleteConfirm === section.id ? 'text-red-600' : ''}
+                                                title={deleteConfirm === section.id ? 'Click again to confirm' : 'Delete section'}
+                                            >
+                                                <TrashIcon className="h-4 w-4" />
+                                            </Button>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -470,6 +485,20 @@ export default function PageEditor({ params }: PageEditorProps) {
                     </div>
                 </div>
             </div>
+
+            {/* Section Library Modal */}
+            <SectionLibrary
+                isOpen={showSectionLibrary}
+                onClose={() => setShowSectionLibrary(false)}
+                onAddSection={handleAddSection}
+            />
+
+            {/* Preview Modal */}
+            <PagePreviewModal
+                page={currentPage}
+                isOpen={showPreview}
+                onClose={() => setShowPreview(false)}
+            />
         </div>
     )
 }

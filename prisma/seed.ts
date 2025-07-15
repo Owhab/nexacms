@@ -33,48 +33,9 @@ async function main() {
         console.log('ℹ️  Admin user already exists')
     }
 
-    // Create some sample section templates
-    const templates = [
-        {
-            id: 'hero-section',
-            name: 'Hero Section',
-            componentName: 'HeroSection',
-            defaultProps: JSON.stringify({
-                title: 'Welcome to Your Website',
-                subtitle: 'Build amazing experiences with our platform',
-                buttonText: 'Get Started',
-                buttonLink: '#',
-                backgroundImage: '',
-                textAlign: 'center'
-            }),
-            description: 'A hero section with title, subtitle, and call-to-action button'
-        },
-        {
-            id: 'text-block',
-            name: 'Text Block',
-            componentName: 'TextBlock',
-            defaultProps: JSON.stringify({
-                content: '<p>Add your content here...</p>',
-                textAlign: 'left',
-                maxWidth: '800px'
-            }),
-            description: 'A simple text block with rich text editing'
-        },
-        {
-            id: 'image-text',
-            name: 'Image & Text',
-            componentName: 'ImageText',
-            defaultProps: JSON.stringify({
-                image: '',
-                imageAlt: '',
-                title: 'Your Title Here',
-                content: '<p>Your content here...</p>',
-                layout: 'left', // left, right
-                imageWidth: '50%'
-            }),
-            description: 'Image with text content side by side'
-        }
-    ]
+    // Create section templates from registry
+    const { createSectionTemplateData } = await import('../lib/sections/utils')
+    const templates = createSectionTemplateData()
 
     for (const template of templates) {
         const existing = await prisma.sectionTemplate.findUnique({

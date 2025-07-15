@@ -144,22 +144,30 @@ export default function PagesPage() {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                             <div className="flex space-x-2">
-                                                {page.status === 'PUBLISHED' && (
-                                                    <a
-                                                        href={`/storefront${page.slug}`}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                    >
-                                                        <Button size="sm" variant="ghost" title="View Page">
-                                                            <EyeIcon className="h-4 w-4" />
-                                                        </Button>
-                                                    </a>
-                                                )}
+                                                <Link href={`/admin/pages/${page.id}/edit`}>
+                                                    <Button size="sm" variant="ghost" title="Preview & Edit Page">
+                                                        <EyeIcon className="h-4 w-4" />
+                                                    </Button>
+                                                </Link>
                                                 <Link href={`/admin/pages/${page.id}/edit`}>
                                                     <Button size="sm" variant="ghost" title="Edit Page">
                                                         <EditIcon className="h-4 w-4" />
                                                     </Button>
                                                 </Link>
+                                                {page.status === 'PUBLISHED' && (
+                                                    <a
+                                                        href={`/storefront${page.slug}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="inline-block"
+                                                    >
+                                                        <Button size="sm" variant="ghost" title="View Live Page">
+                                                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                            </svg>
+                                                        </Button>
+                                                    </a>
+                                                )}
                                                 {canDelete && (
                                                     <Button
                                                         size="sm"

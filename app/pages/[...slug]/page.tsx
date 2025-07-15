@@ -26,11 +26,11 @@ interface PageSection {
     }
 }
 
-interface StorefrontPageProps {
+interface PublicPageProps {
     params: { slug: string[] }
 }
 
-export default function StorefrontPage({ params }: StorefrontPageProps) {
+export default function PublicPage({ params }: PublicPageProps) {
     const [page, setPage] = useState<Page | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
@@ -40,7 +40,7 @@ export default function StorefrontPage({ params }: StorefrontPageProps) {
     useEffect(() => {
         const fetchPage = async () => {
             try {
-                const response = await fetch(`/api/storefront/pages?slug=${encodeURIComponent(slug)}`)
+                const response = await fetch(`/api/public/pages?slug=${encodeURIComponent(slug)}`)
                 if (response.ok) {
                     const data = await response.json()
                     setPage(data.page)
@@ -73,8 +73,6 @@ export default function StorefrontPage({ params }: StorefrontPageProps) {
     if (error || !page) {
         return notFound()
     }
-
-
 
     return (
         <>
