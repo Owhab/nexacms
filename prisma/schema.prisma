@@ -1,0 +1,104 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String
+  role         UserRole  @default(EDITOR)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  Media        Media[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  ADMIN
+  EDITOR
+  VIEWER
+}
+
+model Page {
+  id             String        @id @default(uuid())
+  title          String
+  slug           String        @unique
+  status         PageStatus    @default(DRAFT)
+  seoTitle       String?
+  seoDescription String?
+  seoKeywords    String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  publishedAt    DateTime?
+  sections       PageSection[]
+
+  @@map("pages")
+}
+
+enum PageStatus {
+  DRAFT
+  PUBLISHED
+  SCHEDULED
+}
+
+model SectionTemplate {
+  id            String        @id @unique
+  name          String        @unique
+  componentName String        @unique
+  defaultProps  Json
+  description   String?
+  PageSection   PageSection[]
+
+  @@map("section_templates")
+}
+
+model PageSection {
+  id                String          @id @default(uuid())
+  pageId            String
+  sectionTemplateId String
+  order             Int
+  props             Json
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  page            Page            @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  sectionTemplate SectionTemplate @relation(fields: [sectionTemplateId], references: [id])
+
+  @@unique([pageId, order])
+  @@map("page_sections")
+}
+
+model Media {
+  id         String    @id @default(uuid())
+  url        String    @unique
+  altText    String?
+  type       MediaType
+  uploadedBy String
+  uploader   User      @relation(fields: [uploadedBy], references: [id])
+  createdAt  DateTime  @default(now())
+
+  @@map("media")
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  DOCUMENT
+}
+
+model Setting {
+  id    String @id @default(uuid())
+  key   String @unique
+  value String
+
+  @@map("settings")
+}
