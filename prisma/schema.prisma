@@ -40,6 +40,7 @@ model Page {
   updatedAt      DateTime      @updatedAt
   publishedAt    DateTime?
   sections       PageSection[]
+  navigationItems NavigationItem[]
 
   @@map("pages")
 }
@@ -101,4 +102,131 @@ model Setting {
   value String
 
   @@map("settings")
+}
+
+model SiteConfig {
+  id                String   @id @default(uuid())
+  siteName          String   @default("My Website")
+  siteDescription   String?
+  logoUrl           String?
+  faviconUrl        String?
+  primaryColor      String   @default("#3b82f6")
+  secondaryColor    String   @default("#64748b")
+  accentColor       String   @default("#10b981")
+  backgroundColor   String   @default("#ffffff")
+  textColor         String   @default("#1f2937")
+  borderColor       String   @default("#e5e7eb")
+  theme             Theme    @default(LIGHT)
+  language          String   @default("en")
+  direction         Direction @default(LTR)
+  headerTemplateId  String?
+  footerTemplateId  String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  headerTemplate HeaderTemplate? @relation("SiteConfigHeader", fields: [headerTemplateId], references: [id])
+  footerTemplate FooterTemplate? @relation("SiteConfigFooter", fields: [footerTemplateId], references: [id])
+
+  @@map("site_config")
+}
+
+enum Theme {
+  LIGHT
+  DARK
+  AUTO
+}
+
+enum Direction {
+  LTR
+  RTL
+}
+
+model HeaderTemplate {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  template    String   // Template identifier (e.g., "modern", "classic", "minimal")
+  config      Json     // Template-specific configuration
+  isActive    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  siteConfigs SiteConfig[] @relation("SiteConfigHeader")
+
+  @@map("header_templates")
+}
+
+model FooterTemplate {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  template    String   // Template identifier (e.g., "modern", "classic", "minimal")
+  config      Json     // Template-specific configuration
+  isActive    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  siteConfigs SiteConfig[] @relation("SiteConfigFooter")
+
+  @@map("footer_templates")
+}
+
+model NavigationMenu {
+  id          String           @id @default(uuid())
+  name        String
+  location    MenuLocation
+  items       NavigationItem[]
+  isActive    Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@map("navigation_menus")
+}
+
+enum MenuLocation {
+  HEADER_PRIMARY
+  HEADER_SECONDARY
+  FOOTER_PRIMARY
+  FOOTER_SECONDARY
+  SIDEBAR
+}
+
+model NavigationItem {
+  id           String           @id @default(uuid())
+  menuId       String
+  parentId     String?
+  title        String
+  url          String?
+  pageId       String?
+  target       LinkTarget       @default(SELF)
+  order        Int
+  isVisible    Boolean          @default(true)
+  cssClass     String?
+  icon         String?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  menu     NavigationMenu    @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  parent   NavigationItem?   @relation("NavigationItemChildren", fields: [parentId], references: [id])
+  children NavigationItem[]  @relation("NavigationItemChildren")
+  page     Page?             @relation(fields: [pageId], references: [id])
+
+  @@unique([menuId, order])
+  @@map("navigation_items")
+}
+
+enum LinkTarget {
+  SELF
+  BLANK
+}
+
+model Translation {
+  id       String @id @default(uuid())
+  language String
+  key      String
+  value    String
+  context  String?
+
+  @@unique([language, key])
+  @@map("translations")
 }

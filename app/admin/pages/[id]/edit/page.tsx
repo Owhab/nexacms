@@ -133,7 +133,7 @@ export default function PageEditor({ params }: PageEditorProps) {
     }
 
     const renderSectionEditor = (section: any) => {
-        const props = JSON.parse(section.props)
+        const props = typeof section.props === 'string' ? JSON.parse(section.props) : section.props
 
         return (
             <SectionRenderer
@@ -147,7 +147,7 @@ export default function PageEditor({ params }: PageEditorProps) {
     }
 
     const renderSectionPreview = (section: any) => {
-        const props = JSON.parse(section.props)
+        const props = typeof section.props === 'string' ? JSON.parse(section.props) : section.props
 
         return (
             <SectionRenderer

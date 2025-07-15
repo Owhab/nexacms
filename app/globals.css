@@ -2,6 +2,123 @@
 @tailwind components;
 @tailwind utilities;
 
+/* CSS Custom Properties for Theme System */
+:root {
+    --primary-color: #3b82f6;
+    --secondary-color: #64748b;
+    --accent-color: #10b981;
+    --background-color: #ffffff;
+    --text-color: #1f2937;
+    --border-color: #e5e7eb;
+}
+
+/* Dark theme overrides */
+.dark {
+    --background-color: #111827;
+    --text-color: #f9fafb;
+    --border-color: #374151;
+}
+
+/* Light theme (default) */
+.light {
+    --background-color: #ffffff;
+    --text-color: #1f2937;
+    --border-color: #e5e7eb;
+}
+
+/* Base styles using custom properties */
+body {
+    background-color: var(--background-color);
+    color: var(--text-color);
+}
+
+/* Utility classes for theme colors */
+.text-primary {
+    color: var(--primary-color);
+}
+
+.bg-primary {
+    background-color: var(--primary-color);
+}
+
+.border-primary {
+    border-color: var(--primary-color);
+}
+
+.text-secondary {
+    color: var(--secondary-color);
+}
+
+.bg-secondary {
+    background-color: var(--secondary-color);
+}
+
+.text-accent {
+    color: var(--accent-color);
+}
+
+.bg-accent {
+    background-color: var(--accent-color);
+}
+
+/* RTL Support */
+[dir="rtl"] {
+    direction: rtl;
+}
+
+[dir="rtl"] .space-x-2>*+* {
+    margin-right: 0.5rem;
+    margin-left: 0;
+}
+
+[dir="rtl"] .space-x-4>*+* {
+    margin-right: 1rem;
+    margin-left: 0;
+}
+
+[dir="rtl"] .ml-2 {
+    margin-right: 0.5rem;
+    margin-left: 0;
+}
+
+[dir="rtl"] .mr-2 {
+    margin-left: 0.5rem;
+    margin-right: 0;
+}
+
+[dir="rtl"] .pl-4 {
+    padding-right: 1rem;
+    padding-left: 0;
+}
+
+[dir="rtl"] .pr-4 {
+    padding-left: 1rem;
+    padding-right: 0;
+}
+
+/* Smooth transitions for theme changes */
+* {
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Custom scrollbar for better theming */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--background-color);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--secondary-color);
+}
+
 @layer base {
     :root {
         --background: 0 0% 100%;

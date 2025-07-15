@@ -79,11 +79,6 @@ export function SectionRenderer({ sectionId, props, mode, onSave, onCancel }: Se
         )
     }
 
-    const componentProps = {
-        props,
-        ...(mode === 'editor' && { onSave, onCancel })
-    }
-
     return (
         <React.Suspense fallback={
             <div className="p-6 bg-gray-50 rounded-lg animate-pulse">
@@ -91,7 +86,19 @@ export function SectionRenderer({ sectionId, props, mode, onSave, onCancel }: Se
                 <div className="h-3 bg-gray-200 rounded w-1/2"></div>
             </div>
         }>
-            <Component {...componentProps} />
+            {mode === 'editor' ? (
+                <Component
+                    props={props}
+                    onSave={onSave || (() => { })}
+                    onCancel={onCancel || (() => { })}
+                />
+            ) : (
+                <Component
+                    props={props}
+                    onSave={() => { }}
+                    onCancel={() => { }}
+                />
+            )}
         </React.Suspense>
     )
 }

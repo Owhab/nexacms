@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url)
@@ -52,7 +54,7 @@ export async function GET(request: NextRequest) {
             // Search in section content
             for (const section of page.sections) {
                 try {
-                    const props = JSON.parse(section.props)
+                    const props = typeof section.props === 'string' ? JSON.parse(section.props) : section.props
 
                     // Check for text content in different section types
                     const contentToSearch = [

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url)
@@ -34,7 +36,7 @@ export async function GET(request: NextRequest) {
         // Parse JSON props for each section
         const sectionsWithParsedProps = page.sections.map(section => ({
             ...section,
-            props: JSON.parse(section.props)
+            props: typeof section.props === 'string' ? JSON.parse(section.props) : section.props
         }))
 
         const pageWithParsedSections = {

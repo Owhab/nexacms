@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { AdminSidebar } from '@/components/admin/sidebar'
 import { useAppDispatch, useAppSelector } from '@/store'
 import { checkAuth } from '@/store/authSlice'
+import { SiteConfigProvider } from '@/contexts/site-config-context'
 
 export default function AdminLayout({
     children,
@@ -43,11 +44,13 @@ export default function AdminLayout({
     }
 
     return (
-        <div className="flex h-screen bg-gray-50">
-            <AdminSidebar />
-            <main className="flex-1 overflow-auto">
-                {children}
-            </main>
-        </div>
+        <SiteConfigProvider>
+            <div className="flex h-screen bg-gray-50">
+                <AdminSidebar />
+                <main className="flex-1 overflow-auto">
+                    {children}
+                </main>
+            </div>
+        </SiteConfigProvider>
     )
 }
