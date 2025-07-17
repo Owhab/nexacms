@@ -3,16 +3,13 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { MediaUpload } from '@/components/ui/MediaUpload'
-import { MediaLibrary } from '@/components/ui/MediaLibrary'
 import { MediaItem } from '@/lib/types/media'
 import {
     ImageIcon,
     VideoIcon,
     FileIcon,
     UploadIcon,
-    SearchIcon,
-    FilterIcon,
-    GridIcon,
+    SearchIcon, GridIcon,
     ListIcon
 } from 'lucide-react'
 

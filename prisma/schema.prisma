@@ -13,13 +13,54 @@ datasource db {
 model User {
   id           String    @id @default(uuid())
   email        String    @unique
-  passwordHash String
+  passwordHash String?
+  googleId     String?   @unique
+  name         String?
+  avatar       String?
   role         UserRole  @default(EDITOR)
+  status       UserStatus @default(ACTIVE)
+  lastLoginAt  DateTime?
+  invitedBy    String?
+  invitedAt    DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+  
+  inviter      User?     @relation("UserInvitations", fields: [invitedBy], references: [id])
+  invitees     User[]    @relation("UserInvitations")
+  sentInvitations UserInvitation[]
   Media        Media[]
 
   @@map("users")
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  PENDING
+  SUSPENDED
+}
+
+model UserInvitation {
+  id          String            @id @default(uuid())
+  email       String
+  role        UserRole          @default(EDITOR)
+  token       String            @unique
+  invitedBy   String
+  status      InvitationStatus  @default(PENDING)
+  expiresAt   DateTime
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  inviter     User              @relation(fields: [invitedBy], references: [id])
+
+  @@map("user_invitations")
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  CANCELLED
 }
 
 enum UserRole {

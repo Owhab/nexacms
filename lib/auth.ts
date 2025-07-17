@@ -36,6 +36,11 @@ export async function authenticateUser(email: string, password: string): Promise
             return null
         }
 
+        // Users who signed up with Google might not have a password hash
+        if (!user.passwordHash) {
+            return null
+        }
+
         const isValidPassword = await verifyPassword(password, user.passwordHash)
         if (!isValidPassword) {
             return null
