@@ -9,9 +9,9 @@ export async function POST(
     { params }: { params: { id: string } }
 ) {
     try {
-        const token = request.headers.get('authorization')?.replace('Bearer ', '')
+        const token = request.cookies.get('auth-token')?.value
         if (!token) {
-            return NextResponse.json({ error: 'No token provided' }, { status: 401 })
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
         const payload = verifyToken(token)
@@ -69,9 +69,9 @@ export async function PUT(
     { params }: { params: { id: string } }
 ) {
     try {
-        const token = request.headers.get('authorization')?.replace('Bearer ', '')
+        const token = request.cookies.get('auth-token')?.value
         if (!token) {
-            return NextResponse.json({ error: 'No token provided' }, { status: 401 })
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
         const payload = verifyToken(token)

@@ -85,6 +85,10 @@ model Media {
   type       MediaType
   uploadedBy String
   uploader   User      @relation(fields: [uploadedBy], references: [id])
+  fileName   String
+  fileSize   Int
+  mimeType   String
+  category   String    @default("general")
   createdAt  DateTime  @default(now())
 
   @@map("media")

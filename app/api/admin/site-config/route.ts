@@ -6,9 +6,9 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
     try {
-        const token = request.headers.get('authorization')?.replace('Bearer ', '')
+        const token = request.cookies.get('auth-token')?.value
         if (!token) {
-            return NextResponse.json({ error: 'No token provided' }, { status: 401 })
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
         const payload = verifyToken(token)
@@ -55,9 +55,9 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
     try {
-        const token = request.headers.get('authorization')?.replace('Bearer ', '')
+        const token = request.cookies.get('auth-token')?.value
         if (!token) {
-            return NextResponse.json({ error: 'No token provided' }, { status: 401 })
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
         const payload = verifyToken(token)
@@ -66,30 +66,61 @@ export async function PUT(request: NextRequest) {
         }
 
         const updates = await request.json()
+        console.log('Site config update request:', updates)
+
+        // Validate and normalize template IDs
+        let validatedHeaderTemplateId = null
+        let validatedFooterTemplateId = null
+
+        if (updates.headerTemplateId && updates.headerTemplateId !== '') {
+            const headerTemplate = await prisma.headerTemplate.findUnique({
+                where: { id: updates.headerTemplateId }
+            })
+            if (!headerTemplate) {
+                console.error('Invalid headerTemplateId:', updates.headerTemplateId)
+                return NextResponse.json({ error: 'Invalid header template ID' }, { status: 400 })
+            }
+            validatedHeaderTemplateId = updates.headerTemplateId
+        }
+
+        if (updates.footerTemplateId && updates.footerTemplateId !== '') {
+            const footerTemplate = await prisma.footerTemplate.findUnique({
+                where: { id: updates.footerTemplateId }
+            })
+            if (!footerTemplate) {
+                console.error('Invalid footerTemplateId:', updates.footerTemplateId)
+                return NextResponse.json({ error: 'Invalid footer template ID' }, { status: 400 })
+            }
+            validatedFooterTemplateId = updates.footerTemplateId
+        }
 
         // Get existing config
         let config = await prisma.siteConfig.findFirst()
 
+        // Prepare data for create/update
+        const configData = {
+            siteName: updates.siteName || 'My Website',
+            siteDescription: updates.siteDescription || null,
+            logoUrl: updates.logoUrl || null,
+            faviconUrl: updates.faviconUrl || null,
+            primaryColor: updates.primaryColor || '#3b82f6',
+            secondaryColor: updates.secondaryColor || '#64748b',
+            accentColor: updates.accentColor || '#10b981',
+            backgroundColor: updates.backgroundColor || '#ffffff',
+            textColor: updates.textColor || '#1f2937',
+            borderColor: updates.borderColor || '#e5e7eb',
+            theme: updates.theme || 'LIGHT',
+            language: updates.language || 'en',
+            direction: updates.direction || 'LTR',
+            headerTemplateId: validatedHeaderTemplateId,
+            footerTemplateId: validatedFooterTemplateId,
+        }
+
         if (!config) {
-            // Create new config with updates
+            // Create new config
+            console.log('Creating new site config with data:', configData)
             config = await prisma.siteConfig.create({
-                data: {
-                    siteName: updates.siteName || 'My Website',
-                    siteDescription: updates.siteDescription,
-                    logoUrl: updates.logoUrl,
-                    faviconUrl: updates.faviconUrl,
-                    primaryColor: updates.primaryColor || '#3b82f6',
-                    secondaryColor: updates.secondaryColor || '#64748b',
-                    accentColor: updates.accentColor || '#10b981',
-                    backgroundColor: updates.backgroundColor || '#ffffff',
-                    textColor: updates.textColor || '#1f2937',
-                    borderColor: updates.borderColor || '#e5e7eb',
-                    theme: updates.theme || 'LIGHT',
-                    language: updates.language || 'en',
-                    direction: updates.direction || 'LTR',
-                    headerTemplateId: updates.headerTemplateId,
-                    footerTemplateId: updates.footerTemplateId,
-                },
+                data: configData,
                 include: {
                     headerTemplate: true,
                     footerTemplate: true,
@@ -97,10 +128,11 @@ export async function PUT(request: NextRequest) {
             })
         } else {
             // Update existing config
+            console.log('Updating existing site config with data:', configData)
             config = await prisma.siteConfig.update({
                 where: { id: config.id },
                 data: {
-                    ...updates,
+                    ...configData,
                     updatedAt: new Date(),
                 },
                 include: {
@@ -110,9 +142,19 @@ export async function PUT(request: NextRequest) {
             })
         }
 
+        console.log('Site config operation successful:', config.id)
         return NextResponse.json({ config })
     } catch (error) {
         console.error('Error updating site config:', error)
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+        if (error instanceof Error) {
+            console.error('Error details:', error.message)
+        }
+        if (error && typeof error === 'object' && 'code' in error) {
+            console.error('Error code:', error.code)
+        }
+        return NextResponse.json({
+            error: 'Internal server error',
+            details: process.env.NODE_ENV === 'development' && error instanceof Error ? error.message : undefined
+        }, { status: 500 })
     }
 }

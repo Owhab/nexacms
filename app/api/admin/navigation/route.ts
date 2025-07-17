@@ -6,9 +6,9 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
     try {
-        const token = request.headers.get('authorization')?.replace('Bearer ', '')
+        const token = request.cookies.get('auth-token')?.value
         if (!token) {
-            return NextResponse.json({ error: 'No token provided' }, { status: 401 })
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
         const payload = verifyToken(token)
@@ -51,9 +51,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
     try {
-        const token = request.headers.get('authorization')?.replace('Bearer ', '')
+        const token = request.cookies.get('auth-token')?.value
         if (!token) {
-            return NextResponse.json({ error: 'No token provided' }, { status: 401 })
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
         const payload = verifyToken(token)

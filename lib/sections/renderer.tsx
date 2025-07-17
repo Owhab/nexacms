@@ -3,15 +3,17 @@ import { getSectionConfig } from './registry'
 
 // Dynamic imports for section components
 const sectionComponents = {
-    // Previews
-    HeroSectionPreview: React.lazy(() => import('@/components/admin/section-previews/HeroSectionPreview').then(m => ({ default: m.HeroSectionPreview }))),
-    TextBlockPreview: React.lazy(() => import('@/components/admin/section-previews/TextBlockPreview').then(m => ({ default: m.TextBlockPreview }))),
-    ImageTextPreview: React.lazy(() => import('@/components/admin/section-previews/ImageTextPreview').then(m => ({ default: m.ImageTextPreview }))),
+    // Hero Section
+    HeroSectionPreview: React.lazy(() => import('./HeroSection').then(m => ({ default: m.HeroSectionPreview }))),
+    HeroSectionEditor: React.lazy(() => import('./HeroSection').then(m => ({ default: m.HeroSectionEditor }))),
 
-    // Editors
-    HeroSectionEditor: React.lazy(() => import('@/components/admin/section-editors/HeroSectionEditor').then(m => ({ default: m.HeroSectionEditor }))),
-    TextBlockEditor: React.lazy(() => import('@/components/admin/section-editors/TextBlockEditor').then(m => ({ default: m.TextBlockEditor }))),
-    ImageTextEditor: React.lazy(() => import('@/components/admin/section-editors/ImageTextEditor').then(m => ({ default: m.ImageTextEditor }))),
+    // Text Block
+    TextBlockPreview: React.lazy(() => import('./TextBlockSection').then(m => ({ default: m.TextBlockSectionPreview }))),
+    TextBlockEditor: React.lazy(() => import('./TextBlockSection').then(m => ({ default: m.TextBlockSectionEditor }))),
+
+    // Image Text
+    ImageTextPreview: React.lazy(() => import('./ImageTextSection').then(m => ({ default: m.ImageTextSectionPreview }))),
+    ImageTextEditor: React.lazy(() => import('./ImageTextSection').then(m => ({ default: m.ImageTextSectionEditor }))),
 }
 
 interface SectionRendererProps {

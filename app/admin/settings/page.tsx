@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
+import { MediaPicker } from '@/components/ui/MediaPicker'
 import { useSiteConfig } from '@/contexts/site-config-context'
 import {
     SettingsIcon,
@@ -159,8 +160,8 @@ export default function SettingsPage() {
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
                                     className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${activeTab === tab.id
-                                            ? 'bg-blue-100 text-blue-700'
-                                            : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                                        ? 'bg-blue-100 text-blue-700'
+                                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                                         }`}
                                 >
                                     <Icon className="mr-3 h-4 w-4" />
@@ -195,21 +196,27 @@ export default function SettingsPage() {
 
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Logo URL
+                                                Logo
                                             </label>
-                                            <div className="flex">
-                                                <input
-                                                    type="url"
-                                                    name="logoUrl"
-                                                    value={formData.logoUrl}
-                                                    onChange={handleInputChange}
-                                                    placeholder="https://example.com/logo.png"
-                                                    className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                />
-                                                <Button variant="outline" className="rounded-l-none">
-                                                    <UploadIcon className="h-4 w-4" />
-                                                </Button>
-                                            </div>
+                                            <MediaPicker
+                                                value={formData.logoUrl ? {
+                                                    id: 'current-logo',
+                                                    url: formData.logoUrl,
+                                                    type: 'IMAGE' as const,
+                                                    fileName: 'logo',
+                                                    fileSize: 0,
+                                                    mimeType: 'image/*'
+                                                } : undefined}
+                                                onChange={(media) => {
+                                                    if (media && !Array.isArray(media)) {
+                                                        setFormData(prev => ({ ...prev, logoUrl: media.url }))
+                                                    }
+                                                }}
+                                                accept="image/*"
+                                                category="branding"
+                                                type="IMAGE"
+                                                placeholder="Upload or select logo"
+                                            />
                                         </div>
 
                                         <div className="md:col-span-2">
@@ -227,21 +234,27 @@ export default function SettingsPage() {
 
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Favicon URL
+                                                Favicon
                                             </label>
-                                            <div className="flex">
-                                                <input
-                                                    type="url"
-                                                    name="faviconUrl"
-                                                    value={formData.faviconUrl}
-                                                    onChange={handleInputChange}
-                                                    placeholder="https://example.com/favicon.ico"
-                                                    className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                />
-                                                <Button variant="outline" className="rounded-l-none">
-                                                    <UploadIcon className="h-4 w-4" />
-                                                </Button>
-                                            </div>
+                                            <MediaPicker
+                                                value={formData.faviconUrl ? {
+                                                    id: 'current-favicon',
+                                                    url: formData.faviconUrl,
+                                                    type: 'IMAGE' as const,
+                                                    fileName: 'favicon',
+                                                    fileSize: 0,
+                                                    mimeType: 'image/*'
+                                                } : undefined}
+                                                onChange={(media) => {
+                                                    if (media && !Array.isArray(media)) {
+                                                        setFormData(prev => ({ ...prev, faviconUrl: media.url }))
+                                                    }
+                                                }}
+                                                accept="image/x-icon,image/png,image/svg+xml"
+                                                category="branding"
+                                                type="IMAGE"
+                                                placeholder="Upload or select favicon"
+                                            />
                                         </div>
                                     </div>
                                 </div>
@@ -482,8 +495,8 @@ export default function SettingsPage() {
                                                     <div
                                                         key={template.id}
                                                         className={`p-4 border rounded-lg cursor-pointer transition-colors ${formData.headerTemplateId === template.id
-                                                                ? 'border-blue-500 bg-blue-50'
-                                                                : 'border-gray-200 hover:border-gray-300'
+                                                            ? 'border-blue-500 bg-blue-50'
+                                                            : 'border-gray-200 hover:border-gray-300'
                                                             }`}
                                                         onClick={() => setFormData(prev => ({ ...prev, headerTemplateId: template.id }))}
                                                     >
@@ -503,8 +516,8 @@ export default function SettingsPage() {
                                                     <div
                                                         key={template.id}
                                                         className={`p-4 border rounded-lg cursor-pointer transition-colors ${formData.footerTemplateId === template.id
-                                                                ? 'border-blue-500 bg-blue-50'
-                                                                : 'border-gray-200 hover:border-gray-300'
+                                                            ? 'border-blue-500 bg-blue-50'
+                                                            : 'border-gray-200 hover:border-gray-300'
                                                             }`}
                                                         onClick={() => setFormData(prev => ({ ...prev, footerTemplateId: template.id }))}
                                                     >
