@@ -547,12 +547,6 @@ export default function SettingsPage() {
                                         Configure your site navigation menus. You can create different menus for header, footer, and other locations.
                                     </p>
 
-                                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                                        <p className="text-yellow-800">
-                                            Navigation management interface will be implemented in the next phase.
-                                            This will include drag-and-drop menu builder with support for nested items.
-                                        </p>
-                                    </div>
                                 </div>
                             </div>
                         )}

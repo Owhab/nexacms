@@ -12,12 +12,14 @@ import {
     UsersIcon,
     SettingsIcon,
     LogOutIcon,
-    UserIcon
+    UserIcon,
+    BookOpenIcon
 } from 'lucide-react'
 
 const navigation = [
     { name: 'Dashboard', href: '/admin', icon: HomeIcon, roles: ['ADMIN', 'EDITOR', 'VIEWER'] },
     { name: 'Pages', href: '/admin/pages', icon: FileTextIcon, roles: ['ADMIN', 'EDITOR', 'VIEWER'] },
+    { name: 'Blog', href: '/admin/blog', icon: BookOpenIcon, roles: ['ADMIN', 'EDITOR'] },
     { name: 'Media', href: '/admin/media', icon: ImageIcon, roles: ['ADMIN', 'EDITOR', 'VIEWER'] },
     { name: 'Users', href: '/admin/users', icon: UsersIcon, roles: ['ADMIN'] },
     { name: 'Settings', href: '/admin/settings', icon: SettingsIcon, roles: ['ADMIN'] },

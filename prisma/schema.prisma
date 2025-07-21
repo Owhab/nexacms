@@ -29,6 +29,8 @@ model User {
   invitees     User[]    @relation("UserInvitations")
   sentInvitations UserInvitation[]
   Media        Media[]
+  blogPosts    BlogPost[]
+  blogComments BlogComment[]
 
   @@map("users")
 }
@@ -274,4 +276,108 @@ model Translation {
 
   @@unique([language, key])
   @@map("translations")
+}
+// Blog System Models
+model BlogCategory {
+  id          String     @id @default(uuid())
+  name        String     @unique
+  slug        String     @unique
+  description String?
+  color       String?    @default("#3b82f6")
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  posts       BlogPost[]
+
+  @@map("blog_categories")
+}
+
+model BlogTag {
+  id        String     @id @default(uuid())
+  name      String     @unique
+  slug      String     @unique
+  color     String?    @default("#64748b")
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  posts     BlogPostTag[]
+
+  @@map("blog_tags")
+}
+
+model BlogPost {
+  id             String        @id @default(uuid())
+  title          String
+  slug           String        @unique
+  excerpt        String?
+  content        String
+  featuredImage  String?
+  status         BlogPostStatus @default(DRAFT)
+  seoTitle       String?
+  seoDescription String?
+  seoKeywords    String?
+  readingTime    Int?          // in minutes
+  viewCount      Int           @default(0)
+  authorId       String
+  categoryId     String?
+  publishedAt    DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  author         User          @relation(fields: [authorId], references: [id])
+  category       BlogCategory? @relation(fields: [categoryId], references: [id])
+  tags           BlogPostTag[]
+  comments       BlogComment[]
+
+  @@index([status, publishedAt])
+  @@index([categoryId])
+  @@index([authorId])
+  @@map("blog_posts")
+}
+
+enum BlogPostStatus {
+  DRAFT
+  PUBLISHED
+  SCHEDULED
+  ARCHIVED
+}
+
+model BlogPostTag {
+  id     String @id @default(uuid())
+  postId String
+  tagId  String
+
+  post   BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag    BlogTag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, tagId])
+  @@map("blog_post_tags")
+}
+
+model BlogComment {
+  id        String            @id @default(uuid())
+  content   String
+  authorId  String?
+  postId    String
+  parentId  String?
+  status    BlogCommentStatus @default(PENDING)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  author   User?         @relation(fields: [authorId], references: [id])
+  post     BlogPost      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  parent   BlogComment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies  BlogComment[] @relation("CommentReplies")
+
+  @@index([postId])
+  @@index([status])
+  @@map("blog_comments")
+}
+
+enum BlogCommentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SPAM
 }
