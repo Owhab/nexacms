@@ -7,6 +7,8 @@ import { useAppDispatch, useAppSelector } from '@/store'
 import { checkAuth } from '@/store/authSlice'
 import { CheckIcon, ArrowRightIcon } from 'lucide-react'
 import { StorefrontSectionRenderer } from '@/lib/sections/renderer'
+import { SiteNavigation } from '@/components/public/SiteNavigation'
+import { SiteFooter } from '@/components/public/SiteFooter'
 
 interface Page {
     id: string
@@ -84,6 +86,8 @@ export default function HomePage() {
                 </head>
 
                 <div className="min-h-screen bg-white">
+                    <SiteNavigation />
+
                     {homepage.sections.length === 0 ? (
                         <div className="min-h-screen flex items-center justify-center">
                             <div className="text-center">
@@ -103,6 +107,8 @@ export default function HomePage() {
                                 <StorefrontSectionRenderer key={section.id} section={section} />
                             ))
                     )}
+
+                    <SiteFooter />
                 </div>
             </>
         )

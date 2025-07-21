@@ -233,13 +233,13 @@ export default function PageEditor({ params }: PageEditorProps) {
                                     </Button>
                                 </a>
                                 <a
-                                    href={`/storefront${currentPage.slug}`}
+                                    href={currentPage.slug === '/' ? '/' : `/pages${currentPage.slug}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                 >
                                     <Button variant="outline" size="sm">
                                         <EyeIcon className="mr-2 h-4 w-4" />
-                                        Storefront
+                                        View Live
                                     </Button>
                                 </a>
                             </>

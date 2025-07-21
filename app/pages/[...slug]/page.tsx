@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import { notFound } from 'next/navigation'
 import { StorefrontSectionRenderer } from '@/lib/sections/renderer'
+import { SiteNavigation } from '@/components/public/SiteNavigation'
+import { SiteFooter } from '@/components/public/SiteFooter'
 
 interface Page {
     id: string
@@ -87,6 +89,8 @@ export default function PublicPage({ params }: PublicPageProps) {
             </head>
 
             <div className="min-h-screen bg-white">
+                <SiteNavigation />
+
                 {page.sections.length === 0 ? (
                     <div className="min-h-screen flex items-center justify-center">
                         <div className="text-center">
@@ -101,6 +105,8 @@ export default function PublicPage({ params }: PublicPageProps) {
                             <StorefrontSectionRenderer key={section.id} section={section} />
                         ))
                 )}
+
+                <SiteFooter />
             </div>
         </>
     )

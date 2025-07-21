@@ -54,7 +54,7 @@ export function PagePreviewModal({ page, isOpen, onClose }: PagePreviewModalProp
                         <div className="flex items-center space-x-2">
                             {page.status === 'PUBLISHED' && (
                                 <a
-                                    href={`/storefront${page.slug}`}
+                                    href={page.slug === '/' ? '/' : `/pages${page.slug}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="inline-flex items-center px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"

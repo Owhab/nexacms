@@ -186,7 +186,7 @@ export default function PagesPage() {
                                                 </Link>
                                                 {page.status === 'PUBLISHED' && (
                                                     <a
-                                                        href={`/storefront${page.slug}`}
+                                                        href={page.slug === '/' ? '/' : `/pages${page.slug}`}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         className="inline-block"
