@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { MediaPicker } from '@/components/ui/MediaPicker'
+import { NavigationManager } from '@/components/admin/NavigationManager'
 import { useSiteConfig } from '@/contexts/site-config-context'
 import {
     SettingsIcon,
@@ -532,6 +533,10 @@ export default function SettingsPage() {
                                     </div>
                                 </div>
                             </div>
+                        )}
+
+                        {activeTab === 'navigation' && (
+                            <NavigationManager />
                         )}
 
                         {activeTab === 'navigation' && (
