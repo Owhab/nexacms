@@ -1,21 +1,64 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { useAppDispatch, useAppSelector } from '@/store'
 import { checkAuth } from '@/store/authSlice'
 import { CheckIcon, ArrowRightIcon } from 'lucide-react'
+import { StorefrontSectionRenderer } from '@/lib/sections/renderer'
 
-export default function LandingPage() {
+interface Page {
+    id: string
+    title: string
+    slug: string
+    status: string
+    seoTitle?: string
+    seoDescription?: string
+    seoKeywords?: string
+    sections: PageSection[]
+}
+
+interface PageSection {
+    id: string
+    order: number
+    props: any
+    sectionTemplate: {
+        id: string
+        name: string
+        componentName: string
+    }
+}
+
+export default function HomePage() {
     const dispatch = useAppDispatch()
     const { user, loading } = useAppSelector((state) => state.auth)
+    const [homepage, setHomepage] = useState<Page | null>(null)
+    const [pageLoading, setPageLoading] = useState(true)
 
     useEffect(() => {
         dispatch(checkAuth())
+        fetchHomepage()
     }, [dispatch])
 
-    if (loading) {
+    const fetchHomepage = async () => {
+        try {
+            const response = await fetch('/api/public/pages?slug=/')
+            if (response.ok) {
+                const data = await response.json()
+                setHomepage(data.page)
+            } else {
+                // No custom homepage found, will show default landing page
+                console.log('No custom homepage found, showing default landing page')
+            }
+        } catch (error) {
+            console.error('Error fetching homepage:', error)
+        } finally {
+            setPageLoading(false)
+        }
+    }
+
+    if (loading || pageLoading) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
                 <div className="text-center">
@@ -26,6 +69,46 @@ export default function LandingPage() {
         )
     }
 
+    // If we have a custom homepage, render it
+    if (homepage) {
+        return (
+            <>
+                <head>
+                    <title>{homepage.seoTitle || homepage.title}</title>
+                    {homepage.seoDescription && (
+                        <meta name="description" content={homepage.seoDescription} />
+                    )}
+                    {homepage.seoKeywords && (
+                        <meta name="keywords" content={homepage.seoKeywords} />
+                    )}
+                </head>
+
+                <div className="min-h-screen bg-white">
+                    {homepage.sections.length === 0 ? (
+                        <div className="min-h-screen flex items-center justify-center">
+                            <div className="text-center">
+                                <h1 className="text-4xl font-bold text-gray-900 mb-4">{homepage.title}</h1>
+                                <p className="text-gray-600">This page has no content sections yet.</p>
+                                {user && (
+                                    <Link href={`/admin/pages/${homepage.id}/edit`} className="mt-4 inline-block">
+                                        <Button>Edit Homepage</Button>
+                                    </Link>
+                                )}
+                            </div>
+                        </div>
+                    ) : (
+                        [...homepage.sections]
+                            .sort((a, b) => a.order - b.order)
+                            .map((section) => (
+                                <StorefrontSectionRenderer key={section.id} section={section} />
+                            ))
+                    )}
+                </div>
+            </>
+        )
+    }
+
+    // Default landing page when no custom homepage exists
     return (
         <div className="min-h-screen bg-white">
             {/* Header */}

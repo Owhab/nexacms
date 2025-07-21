@@ -65,6 +65,8 @@ export function NavigationManager() {
     const [showCreateItem, setShowCreateItem] = useState(false)
     const [editingItem, setEditingItem] = useState<NavigationItem | null>(null)
     const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
+    const [draggedItem, setDraggedItem] = useState<string | null>(null)
+    const [dragOverItem, setDragOverItem] = useState<string | null>(null)
 
     const [menuForm, setMenuForm] = useState({
         name: '',
@@ -317,7 +319,13 @@ export function NavigationManager() {
             })
 
             if (response.ok) {
-                await fetchMenus()
+                const data = await response.json()
+                // Update the menus state
+                setMenus(prev => prev.map(menu =>
+                    menu.id === selectedMenu.id ? data.menu : menu
+                ))
+                // Update the selected menu to reflect changes immediately
+                setSelectedMenu(data.menu)
             } else {
                 const error = await response.json()
                 alert(error.message || 'Failed to reorder items')
@@ -338,27 +346,91 @@ export function NavigationManager() {
         const currentIndex = topLevelItems.findIndex(item => item.id === itemId)
         if (currentIndex === -1) return
 
+        // Validate bounds before attempting swap
+        if (direction === 'up' && currentIndex <= 0) return
+        if (direction === 'down' && currentIndex >= topLevelItems.length - 1) return
+
         const newItems = [...topLevelItems]
-        if (direction === 'up' && currentIndex > 0) {
-            [newItems[currentIndex], newItems[currentIndex - 1]] = [newItems[currentIndex - 1], newItems[currentIndex]]
-        } else if (direction === 'down' && currentIndex < newItems.length - 1) {
-            [newItems[currentIndex], newItems[currentIndex + 1]] = [newItems[currentIndex + 1], newItems[currentIndex]]
-        } else {
-            return // No change needed
+
+        if (direction === 'up') {
+            const targetIndex = currentIndex - 1
+            // Safe swap
+            const temp = newItems[currentIndex]
+            newItems[currentIndex] = newItems[targetIndex]
+            newItems[targetIndex] = temp
+        } else if (direction === 'down') {
+            const targetIndex = currentIndex + 1
+            // Safe swap
+            const temp = newItems[currentIndex]
+            newItems[currentIndex] = newItems[targetIndex]
+            newItems[targetIndex] = temp
+        }
+        handleReorderItems(newItems)
+    }
+
+    const handleDragStart = (e: React.DragEvent, itemId: string) => {
+        setDraggedItem(itemId)
+        e.dataTransfer.effectAllowed = 'move'
+        e.dataTransfer.setData('text/html', itemId)
+    }
+
+    const handleDragOver = (e: React.DragEvent, itemId: string) => {
+        e.preventDefault()
+        e.dataTransfer.dropEffect = 'move'
+        setDragOverItem(itemId)
+    }
+
+    const handleDragLeave = () => {
+        setDragOverItem(null)
+    }
+
+    const handleDrop = (e: React.DragEvent, targetItemId: string) => {
+        e.preventDefault()
+
+        if (!draggedItem || !selectedMenu || draggedItem === targetItemId) {
+            setDraggedItem(null)
+            setDragOverItem(null)
+            return
         }
 
+        const topLevelItems = selectedMenu.items
+            .filter(item => !item.parentId)
+            .sort((a, b) => a.order - b.order)
+
+        const draggedIndex = topLevelItems.findIndex(item => item.id === draggedItem)
+        const targetIndex = topLevelItems.findIndex(item => item.id === targetItemId)
+
+        if (draggedIndex === -1 || targetIndex === -1) {
+            setDraggedItem(null)
+            setDragOverItem(null)
+            return
+        }
+
+        const newItems = [...topLevelItems]
+        const [draggedItemData] = newItems.splice(draggedIndex, 1)
+        newItems.splice(targetIndex, 0, draggedItemData)
+
         handleReorderItems(newItems)
+        setDraggedItem(null)
+        setDragOverItem(null)
     }
 
     const renderNavigationItem = (item: NavigationItem, level = 0, index = 0, totalItems = 0) => {
         const hasChildren = item.children && item.children.length > 0
         const isExpanded = expandedItems.has(item.id)
+        const isDragging = draggedItem === item.id
+        const isDragOver = dragOverItem === item.id
 
         return (
-            <div key={item.id} className="border border-gray-200 rounded-lg mb-2">
+            <div key={item.id} className={`border border-gray-200 rounded-lg mb-2 ${isDragOver ? 'border-blue-500 bg-blue-50' : ''}`}>
                 <div
-                    className="flex items-center p-3 bg-white hover:bg-gray-50"
+                    className={`flex items-center p-3 bg-white hover:bg-gray-50 ${isDragging ? 'opacity-50' : ''}`}
                     style={{ paddingLeft: `${12 + level * 20}px` }}
+                    draggable={level === 0}
+                    onDragStart={(e) => level === 0 && handleDragStart(e, item.id)}
+                    onDragOver={(e) => level === 0 && handleDragOver(e, item.id)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => level === 0 && handleDrop(e, item.id)}
                 >
                     <div className="flex items-center flex-1 min-w-0">
                         {hasChildren && (

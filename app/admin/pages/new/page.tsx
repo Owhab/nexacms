@@ -21,6 +21,31 @@ export default function NewPagePage() {
         seoKeywords: ''
     })
 
+    const [selectedTemplate, setSelectedTemplate] = useState<string>('')
+
+    const pageTemplates = [
+        { id: 'homepage', title: 'Homepage', slug: '/', description: 'Main landing page for your website' },
+        { id: 'about', title: 'About Us', slug: '/about', description: 'Tell your story and company information' },
+        { id: 'contact', title: 'Contact', slug: '/contact', description: 'Contact information and form' },
+        { id: 'services', title: 'Services', slug: '/services', description: 'Showcase your services or products' },
+        { id: 'blog', title: 'Blog', slug: '/blog', description: 'Blog or news section' },
+        { id: 'custom', title: 'Custom Page', slug: '', description: 'Create a custom page with your own content' }
+    ]
+
+    const handleTemplateSelect = (templateId: string) => {
+        setSelectedTemplate(templateId)
+        const template = pageTemplates.find(t => t.id === templateId)
+        if (template) {
+            setFormData(prev => ({
+                ...prev,
+                title: template.title,
+                slug: template.slug,
+                seoTitle: template.title,
+                seoDescription: template.description
+            }))
+        }
+    }
+
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target
         setFormData(prev => ({
@@ -28,8 +53,8 @@ export default function NewPagePage() {
             [name]: value
         }))
 
-        // Auto-generate slug from title
-        if (name === 'title' && !formData.slug) {
+        // Auto-generate slug from title only if no template is selected
+        if (name === 'title' && !formData.slug && selectedTemplate === 'custom') {
             const slug = value
                 .toLowerCase()
                 .replace(/[^a-z0-9\s-]/g, '')
@@ -81,6 +106,30 @@ export default function NewPagePage() {
                             {error}
                         </div>
                     )}
+
+                    <div className="bg-white rounded-lg shadow-sm border p-6">
+                        <h2 className="text-lg font-semibold text-gray-900 mb-4">Page Template</h2>
+                        <p className="text-sm text-gray-600 mb-4">Choose a template to get started quickly, or create a custom page.</p>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            {pageTemplates.map((template) => (
+                                <div
+                                    key={template.id}
+                                    className={`p-4 border rounded-lg cursor-pointer transition-colors ${selectedTemplate === template.id
+                                        ? 'border-blue-500 bg-blue-50'
+                                        : 'border-gray-200 hover:border-gray-300'
+                                        }`}
+                                    onClick={() => handleTemplateSelect(template.id)}
+                                >
+                                    <h3 className="font-medium text-gray-900 mb-1">{template.title}</h3>
+                                    <p className="text-sm text-gray-600 mb-2">{template.description}</p>
+                                    {template.slug && (
+                                        <p className="text-xs text-gray-500 font-mono">{template.slug}</p>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
 
                     <div className="bg-white rounded-lg shadow-sm border p-6">
                         <h2 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h2>
