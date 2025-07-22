@@ -13,7 +13,9 @@ import {
     SettingsIcon,
     LogOutIcon,
     UserIcon,
-    BookOpenIcon
+    BookOpenIcon,
+    ExternalLinkIcon,
+    EyeIcon
 } from 'lucide-react'
 
 const navigation = [
@@ -86,7 +88,32 @@ export function AdminSidebar() {
                 })}
             </nav>
 
-            <div className="p-4 border-t border-gray-200">
+            <div className="p-4 border-t border-gray-200 space-y-2">
+                {/* Preview Buttons */}
+                <div className="space-y-2">
+                    <a
+                        href="/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center w-full px-3 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
+                    >
+                        <EyeIcon className="mr-3 h-5 w-5" />
+                        Preview Site
+                        <ExternalLinkIcon className="ml-auto h-4 w-4" />
+                    </a>
+
+                    <a
+                        href="/blog"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center w-full px-3 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-md transition-colors"
+                    >
+                        <BookOpenIcon className="mr-3 h-5 w-5" />
+                        Preview Blog
+                        <ExternalLinkIcon className="ml-auto h-4 w-4" />
+                    </a>
+                </div>
+
                 <button
                     onClick={handleLogout}
                     className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-600 rounded-md hover:text-gray-900 hover:bg-gray-50 transition-colors"
