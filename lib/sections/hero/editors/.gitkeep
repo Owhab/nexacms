@@ -1,0 +1,12 @@
+# This directory will contain hero section editor components
+# Files will be created in subsequent tasks:
+# - HeroCenteredEditor.tsx
+# - HeroSplitScreenEditor.tsx
+# - HeroVideoEditor.tsx
+# - HeroMinimalEditor.tsx
+# - HeroFeatureEditor.tsx
+# - HeroTestimonialEditor.tsx
+# - HeroProductEditor.tsx
+# - HeroServiceEditor.tsx
+# - HeroCTAEditor.tsx
+# - HeroGalleryEditor.tsx

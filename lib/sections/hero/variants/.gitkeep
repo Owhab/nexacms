@@ -1,0 +1,12 @@
+# This directory will contain hero section variant components
+# Files will be created in subsequent tasks:
+# - HeroCentered.tsx
+# - HeroSplitScreen.tsx
+# - HeroVideo.tsx
+# - HeroMinimal.tsx
+# - HeroFeature.tsx
+# - HeroTestimonial.tsx
+# - HeroProduct.tsx
+# - HeroService.tsx
+# - HeroCTA.tsx
+# - HeroGallery.tsx
