@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { SiteNavigation } from '@/components/public/SiteNavigation'
 import { SiteFooter } from '@/components/public/SiteFooter'
+import Image from 'next/image'
 
 interface BlogPost {
     id: string
@@ -141,7 +142,7 @@ export default async function BlogPage() {
                             >
                                 {post.featuredImage && (
                                     <div className="aspect-w-16 aspect-h-9">
-                                        <img
+                                        <Image
                                             src={post.featuredImage}
                                             alt={post.title}
                                             className="w-full h-48 object-cover"
@@ -207,7 +208,7 @@ export default async function BlogPage() {
                                         <div className="flex items-center space-x-4">
                                             <div className="flex items-center space-x-2">
                                                 {post.author.avatar && (
-                                                    <img
+                                                    <Image
                                                         src={post.author.avatar}
                                                         alt={post.author.name}
                                                         className="w-6 h-6 rounded-full"

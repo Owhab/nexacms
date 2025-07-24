@@ -16,8 +16,13 @@ import {
     generateTextClasses,
     generateButtonClasses,
     optimizeImageUrl,
-    shouldLazyLoad
+    shouldLazyLoad,
+    generateImageAltText,
+    generateInteractiveAriaProps,
+    generateKeyboardNavigationProps,
+    generateVideoAccessibilityProps
 } from '../utils'
+import Image from 'next/image'
 
 /**
  * Base Hero Preview Component
@@ -142,6 +147,15 @@ export function HeroButton({ button, className = '', style = {}, onClick }: Hero
     const buttonClasses = generateButtonClasses(button)
     const combinedClasses = [...buttonClasses, className].filter(Boolean).join(' ')
 
+    // Generate accessibility props for interactive elements
+    const interactiveProps = generateInteractiveAriaProps('button', {
+        label: button.ariaLabel || button.text,
+        description: button.description
+    })
+
+    // Generate keyboard navigation props
+    const keyboardProps = generateKeyboardNavigationProps('button')
+
     const handleClick = (e: React.MouseEvent) => {
         if (onClick) {
             e.preventDefault()
@@ -149,22 +163,30 @@ export function HeroButton({ button, className = '', style = {}, onClick }: Hero
         }
     }
 
+    // Determine if this should be a button or link
+    const isExternalLink = button.url && !button.url.startsWith('/') && !button.url.startsWith('#')
+    const linkRel = button.rel || (isExternalLink ? 'noopener noreferrer' : undefined)
+
     return (
         <a
             href={button.url || '#'}
             target={button.target || '_self'}
-            rel={button.rel}
+            rel={linkRel}
             className={combinedClasses}
             style={style}
             onClick={handleClick}
-            aria-label={button.ariaLabel || button.text}
+            {...interactiveProps}
+            {...keyboardProps}
         >
             {button.icon && button.iconPosition === 'left' && (
-                <span className="mr-2">{button.icon}</span>
+                <span className="mr-2" aria-hidden="true">{button.icon}</span>
             )}
-            {button.text}
+            <span>{button.text}</span>
             {button.icon && button.iconPosition === 'right' && (
-                <span className="ml-2">{button.icon}</span>
+                <span className="ml-2" aria-hidden="true">{button.icon}</span>
+            )}
+            {isExternalLink && (
+                <span className="sr-only"> (opens in new tab)</span>
             )}
         </a>
     )
@@ -181,6 +203,9 @@ interface HeroImageProps {
     style?: React.CSSProperties
     sizes?: string
     priority?: boolean
+    variant?: any // HeroVariant
+    purpose?: 'hero' | 'feature' | 'testimonial' | 'product' | 'gallery'
+    isDecorative?: boolean
 }
 
 export function HeroImage({
@@ -188,12 +213,22 @@ export function HeroImage({
     className = '',
     style = {},
     sizes = '100vw',
-    priority = false
+    priority = false,
+    variant,
+    purpose = 'hero',
+    isDecorative = false
 }: HeroImageProps) {
     if (!media || !media.url) return null
 
     const optimizedUrl = optimizeImageUrl(media, undefined, 85)
     const loading = priority ? 'eager' : (media.loading || 'lazy')
+
+    // Generate contextual alt text
+    const altText = generateImageAltText(media, {
+        variant: variant || 'centered',
+        isDecorative,
+        purpose
+    })
 
     const imageClasses = [
         'hero-image',
@@ -202,15 +237,17 @@ export function HeroImage({
     ].filter(Boolean).join(' ')
 
     return (
-        <img
+        <Image
             src={optimizedUrl}
-            alt={media.alt || ''}
+            alt={altText}
             className={imageClasses}
             style={style}
             loading={loading}
             sizes={sizes}
             width={media.width}
             height={media.height}
+            role={isDecorative ? 'presentation' : undefined}
+            aria-hidden={isDecorative}
         />
     )
 }
@@ -224,9 +261,17 @@ interface HeroVideoProps {
     media: any // MediaConfig with video properties
     className?: string
     style?: React.CSSProperties
+    isBackground?: boolean
+    hasSubtitles?: boolean
 }
 
-export function HeroVideo({ media, className = '', style = {} }: HeroVideoProps) {
+export function HeroVideo({ 
+    media, 
+    className = '', 
+    style = {},
+    isBackground = false,
+    hasSubtitles = false
+}: HeroVideoProps) {
     if (!media || !media.url || media.type !== 'video') return null
 
     const videoClasses = [
@@ -234,6 +279,13 @@ export function HeroVideo({ media, className = '', style = {} }: HeroVideoProps)
         media.objectFit && `object-${media.objectFit}`,
         className
     ].filter(Boolean).join(' ')
+
+    // Generate video accessibility props
+    const videoAccessibilityProps = generateVideoAccessibilityProps(media, {
+        hasAudio: !media.muted,
+        hasSubtitles,
+        isBackground
+    })
 
     return (
         <video
@@ -246,8 +298,17 @@ export function HeroVideo({ media, className = '', style = {} }: HeroVideoProps)
             poster={media.poster}
             width={media.width}
             height={media.height}
+            {...videoAccessibilityProps}
         >
             <source src={media.url} type="video/mp4" />
+            {hasSubtitles && (
+                <track kind="captions" src={media.captionsUrl} label="English captions" default />
+            )}
+            {!media.muted && media.autoplay && (
+                <div id="video-autoplay-warning" className="sr-only">
+                    This video plays automatically with sound
+                </div>
+            )}
             Your browser does not support the video tag.
         </video>
     )
@@ -333,23 +394,50 @@ export function HeroFeatureList({
     ].filter(Boolean).join(' ')
 
     return (
-        <div className={listClasses}>
+        <div 
+            className={listClasses}
+            role="list"
+            aria-label="Feature list"
+        >
             {features.map((feature, index) => (
-                <div key={feature.id || index} className="hero-feature-item">
+                <div 
+                    key={feature.id || index} 
+                    className="hero-feature-item"
+                    role="listitem"
+                >
                     {feature.icon && (
-                        <div className="feature-icon text-2xl mb-2">
+                        <div 
+                            className="feature-icon text-2xl mb-2"
+                            aria-hidden="true"
+                        >
                             {feature.icon}
                         </div>
                     )}
                     {feature.title && (
-                        <h3 className="feature-title font-semibold mb-2">
+                        <h3 
+                            className="feature-title font-semibold mb-2"
+                            id={`feature-title-${index}`}
+                        >
                             {feature.title}
                         </h3>
                     )}
                     {feature.description && (
-                        <p className="feature-description text-gray-600">
+                        <p 
+                            className="feature-description text-gray-600"
+                            aria-describedby={feature.title ? `feature-title-${index}` : undefined}
+                        >
                             {feature.description}
                         </p>
+                    )}
+                    {feature.link && (
+                        <a
+                            href={feature.link}
+                            className="feature-link text-primary hover:underline mt-2 inline-block"
+                            aria-label={`Learn more about ${feature.title}`}
+                            {...generateKeyboardNavigationProps('link')}
+                        >
+                            Learn more
+                        </a>
                     )}
                 </div>
             ))}

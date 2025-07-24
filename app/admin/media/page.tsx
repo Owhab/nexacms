@@ -12,6 +12,7 @@ import {
     SearchIcon, GridIcon,
     ListIcon
 } from 'lucide-react'
+import Image from 'next/image'
 
 export default function MediaPage() {
     const [media, setMedia] = useState<MediaItem[]>([])
@@ -23,10 +24,6 @@ export default function MediaPage() {
     const [page, setPage] = useState(1)
     const [totalPages, setTotalPages] = useState(1)
     const [showUpload, setShowUpload] = useState(false)
-
-    useEffect(() => {
-        fetchMedia()
-    }, [search, categoryFilter, typeFilter, page])
 
     const fetchMedia = async () => {
         setLoading(true)
@@ -52,6 +49,12 @@ export default function MediaPage() {
             setLoading(false)
         }
     }
+
+    useEffect(() => {
+        fetchMedia()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [search, categoryFilter, typeFilter, page])
+
 
     const handleUpload = (newMedia: MediaItem) => {
         setMedia(prev => [newMedia, ...prev])
@@ -195,7 +198,7 @@ export default function MediaPage() {
                                 {/* Media preview */}
                                 <div className="aspect-square bg-gray-100 flex items-center justify-center">
                                     {item.type === 'IMAGE' ? (
-                                        <img
+                                        <Image
                                             src={item.url}
                                             alt={item.altText || item.fileName}
                                             className="w-full h-full object-cover"
@@ -266,7 +269,7 @@ export default function MediaPage() {
                                             <div className="flex items-center">
                                                 <div className="flex-shrink-0 h-10 w-10">
                                                     {item.type === 'IMAGE' ? (
-                                                        <img
+                                                        <Image
                                                             src={item.url}
                                                             alt={item.altText || item.fileName}
                                                             className="h-10 w-10 rounded object-cover"

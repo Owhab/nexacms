@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useSiteConfig } from '@/contexts/site-config-context'
+import Image from 'next/image'
 
 interface NavigationItem {
     id: string
@@ -30,7 +31,7 @@ export function ModernFooter({ navigation = [], config = {} }: ModernFooterProps
                     <div className="md:col-span-2">
                         <div className="flex items-center space-x-2 mb-4">
                             {siteConfig.logoUrl && (
-                                <img
+                                <Image
                                     src={siteConfig.logoUrl}
                                     alt={siteConfig.siteName}
                                     className="h-8 w-auto"

@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
 import { SiteNavigation } from '@/components/public/SiteNavigation'
 import { SiteFooter } from '@/components/public/SiteFooter'
+import Image from 'next/image'
 
 interface BlogPost {
     id: string
@@ -147,7 +148,7 @@ function BlogPostCard({ post }: { post: BlogPost }) {
         <article className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-200 group">
             {post.featuredImage && (
                 <div className="aspect-w-16 aspect-h-9 overflow-hidden">
-                    <img
+                    <Image
                         src={post.featuredImage}
                         alt={post.title}
                         className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-200"
@@ -194,7 +195,7 @@ function BlogPostCard({ post }: { post: BlogPost }) {
                     <div className="flex items-center space-x-3">
                         <div className="flex items-center space-x-1">
                             {post.author.avatar && (
-                                <img
+                                <Image
                                     src={post.author.avatar}
                                     alt={post.author.name}
                                     className="w-4 h-4 rounded-full"

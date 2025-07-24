@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useSiteConfig } from '@/contexts/site-config-context'
+import Image from 'next/image'
 
 interface NavigationItem {
     id: string
@@ -31,7 +32,7 @@ export function ModernHeader({ navigation = [], config = {} }: ModernHeaderProps
                     <div className="flex-shrink-0 flex items-center">
                         <Link href="/" className="flex items-center space-x-2">
                             {siteConfig.logoUrl && (
-                                <img
+                                <Image
                                     src={siteConfig.logoUrl}
                                     alt={siteConfig.siteName}
                                     className="h-8 w-auto"

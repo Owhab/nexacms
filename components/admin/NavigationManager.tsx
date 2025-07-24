@@ -85,10 +85,7 @@ export function NavigationManager() {
         icon: ''
     })
 
-    useEffect(() => {
-        fetchMenus()
-        fetchPages()
-    }, [])
+    
 
     const fetchMenus = async () => {
         try {
@@ -118,6 +115,12 @@ export function NavigationManager() {
             console.error('Error fetching pages:', error)
         }
     }
+
+    useEffect(() => {
+        fetchMenus()
+        fetchPages()
+         // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
 
     const handleCreateMenu = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -654,7 +657,7 @@ export function NavigationManager() {
 
                         {selectedMenu.items.length === 0 ? (
                             <div className="text-center py-8 text-gray-500">
-                                No navigation items yet. Click "Add Item" to get started.
+                                No navigation items yet. Click &quot;Add Item&quot; to get started.
                             </div>
                         ) : (
                             <div className="space-y-2">

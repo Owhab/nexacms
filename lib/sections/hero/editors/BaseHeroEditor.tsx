@@ -348,6 +348,42 @@ function EditorFieldComponent({ field, value, onChange, error }: EditorFieldComp
                     />
                 )
 
+            case FieldType.VIDEO:
+                return (
+                    <MediaPicker
+                        value={value ? {
+                            id: value.id || 'video',
+                            url: value.url || value,
+                            type: 'VIDEO' as const,
+                            fileName: value.fileName || 'video',
+                            fileSize: value.fileSize || 0,
+                            mimeType: value.mimeType || 'video/*'
+                        } : undefined}
+                        onChange={(media) => {
+                            if (media && !Array.isArray(media)) {
+                                onChange({
+                                    id: media.id,
+                                    url: media.url,
+                                    type: 'video',
+                                    autoplay: value?.autoplay ?? true,
+                                    loop: value?.loop ?? true,
+                                    muted: value?.muted ?? true,
+                                    controls: value?.controls ?? false,
+                                    poster: value?.poster || '',
+                                    objectFit: value?.objectFit || 'cover',
+                                    loading: value?.loading || 'eager'
+                                })
+                            } else {
+                                onChange(null)
+                            }
+                        }}
+                        accept="video/*"
+                        type="VIDEO"
+                        placeholder={field.placeholder || "Select video"}
+                        maxSize={50 * 1024 * 1024} // 50MB limit for videos
+                    />
+                )
+
             case FieldType.URL:
                 return (
                     <input
@@ -381,7 +417,7 @@ function EditorFieldComponent({ field, value, onChange, error }: EditorFieldComp
             default:
                 return (
                     <div className="p-3 bg-gray-100 rounded text-sm text-gray-600">
-                        Field type "{field.type}" not implemented
+                        Field type &quot;{field.type}&quot; not implemented
                     </div>
                 )
         }

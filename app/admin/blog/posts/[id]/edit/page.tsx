@@ -77,10 +77,6 @@ export default function EditBlogPostPage({ params }: { params: { id: string } })
         readingTime: 0
     })
 
-    useEffect(() => {
-        fetchData()
-    }, [params.id])
-
     const fetchData = async () => {
         try {
             setLoading(true)
@@ -133,6 +129,12 @@ export default function EditBlogPostPage({ params }: { params: { id: string } })
             setLoading(false)
         }
     }
+
+    useEffect(() => {
+        fetchData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [params.id])
+
 
     const generateSlug = (title: string) => {
         return title
@@ -221,7 +223,7 @@ export default function EditBlogPostPage({ params }: { params: { id: string } })
             <div className="p-6">
                 <div className="text-center">
                     <h1 className="text-2xl font-bold text-gray-900 mb-4">Post Not Found</h1>
-                    <p className="text-gray-600 mb-4">The blog post you're looking for doesn't exist.</p>
+                    <p className="text-gray-600 mb-4">The blog post you&apos;re looking for doesn&apos;t exist.</p>
                     <button
                         onClick={() => router.push('/admin/blog')}
                         className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"

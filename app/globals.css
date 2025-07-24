@@ -2,6 +2,142 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Accessibility utilities */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* Focus indicators for accessibility */
+.focus-visible:focus-visible,
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .hero-section {
+    border: 1px solid;
+  }
+  
+  .hero-button,
+  button,
+  a[href] {
+    border: 2px solid;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  [data-reduce-motion="true"] * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Hero section accessibility enhancements */
+.hero-section {
+  scroll-margin-top: 2rem;
+}
+
+.hero-section:focus-within {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+
+/* Skip link for keyboard navigation */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: #000;
+  color: #fff;
+  padding: 8px;
+  text-decoration: none;
+  border-radius: 4px;
+  z-index: 1000;
+  transition: top 0.3s;
+}
+
+.skip-link:focus {
+  top: 6px;
+}
+
+/* Ensure interactive elements have minimum touch target size */
+button,
+a[href],
+input,
+select,
+textarea,
+[tabindex]:not([tabindex="-1"]) {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Color contrast improvements */
+.text-muted-foreground {
+  color: rgb(107 114 128);
+}
+
+@media (prefers-contrast: high) {
+  .text-muted-foreground {
+    color: rgb(75 85 99);
+  }
+}
+
+/* Focus trap styling */
+.focus-trap-active {
+  position: relative;
+}
+
+.focus-trap-active::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border: 2px solid #3b82f6;
+  border-radius: 6px;
+  pointer-events: none;
+  z-index: 1;
+}
+
 /* CSS Custom Properties for Theme System */
 :root {
     --primary-color: #3b82f6;
@@ -10,6 +146,22 @@
     --background-color: #ffffff;
     --text-color: #1f2937;
     --border-color: #e5e7eb;
+    
+    /* Enhanced Hero Section Theme Variables */
+    --hero-primary-color: var(--primary-color);
+    --hero-secondary-color: var(--secondary-color);
+    --hero-accent-color: var(--accent-color);
+    --hero-background-color: var(--background-color);
+    --hero-text-color: var(--text-color);
+    --hero-border-color: var(--border-color);
+    --hero-font-family: inherit;
+    --hero-border-radius: 0.5rem;
+    
+    /* Hero Section Responsive Breakpoints */
+    --hero-mobile-max: 767px;
+    --hero-tablet-min: 768px;
+    --hero-tablet-max: 1023px;
+    --hero-desktop-min: 1024px;
 }
 
 /* Dark theme overrides */
@@ -176,8 +328,291 @@ body {
     }
 }
 
-/* Custo
-m prose styles for section previews */
+/* Enhanced Hero Section Styles */
+.hero-section {
+    /* Use hero-specific CSS variables */
+    color: var(--hero-text-color);
+    background-color: var(--hero-background-color);
+    border-color: var(--hero-border-color);
+    font-family: var(--hero-font-family);
+    border-radius: var(--hero-border-radius);
+}
+
+/* Hero section theme integration */
+.hero-section .hero-title {
+    color: var(--hero-text-color);
+}
+
+.hero-section .hero-subtitle {
+    color: var(--hero-secondary-color);
+}
+
+.hero-section .hero-description {
+    color: var(--hero-text-color);
+    opacity: 0.8;
+}
+
+.hero-section .hero-buttons .btn-primary {
+    background-color: var(--hero-primary-color);
+    border-color: var(--hero-primary-color);
+    color: white;
+}
+
+.hero-section .hero-buttons .btn-secondary {
+    background-color: transparent;
+    border-color: var(--hero-border-color);
+    color: var(--hero-text-color);
+}
+
+.hero-section .hero-buttons .btn-accent {
+    background-color: var(--hero-accent-color);
+    border-color: var(--hero-accent-color);
+    color: white;
+}
+
+/* Dark theme overrides for hero sections */
+.dark .hero-section {
+    --hero-background-color: var(--background-color);
+    --hero-text-color: var(--text-color);
+    --hero-border-color: var(--border-color);
+}
+
+.dark .hero-section .hero-description {
+    opacity: 0.7;
+}
+
+/* Light theme overrides for hero sections */
+.light .hero-section {
+    --hero-background-color: var(--background-color);
+    --hero-text-color: var(--text-color);
+    --hero-border-color: var(--border-color);
+}
+
+/* Theme compatibility warning styles */
+.theme-incompatible {
+    position: relative;
+}
+
+.theme-incompatible::before {
+    content: "⚠️";
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    z-index: 1000;
+    background: #fbbf24;
+    color: #000;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* Responsive hero section utilities */
+@media (max-width: 767px) {
+    .hero-section {
+        --hero-mobile-padding: 1rem;
+        --hero-mobile-gap: 1rem;
+    }
+    
+    .hero-section .hero-title {
+        font-size: 1.875rem;
+        line-height: 2.25rem;
+    }
+    
+    .hero-section .hero-subtitle {
+        font-size: 1.125rem;
+        line-height: 1.75rem;
+    }
+    
+    .hero-section .hero-description {
+        font-size: 1rem;
+        line-height: 1.5rem;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+    .hero-section {
+        --hero-tablet-padding: 2rem;
+        --hero-tablet-gap: 1.5rem;
+    }
+    
+    .hero-section .hero-title {
+        font-size: 2.25rem;
+        line-height: 2.5rem;
+    }
+    
+    .hero-section .hero-subtitle {
+        font-size: 1.25rem;
+        line-height: 1.75rem;
+    }
+    
+    .hero-section .hero-description {
+        font-size: 1.125rem;
+        line-height: 1.75rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    .hero-section {
+        --hero-desktop-padding: 3rem;
+        --hero-desktop-gap: 2rem;
+    }
+    
+    .hero-section .hero-title {
+        font-size: 3rem;
+        line-height: 1;
+    }
+    
+    .hero-section .hero-subtitle {
+        font-size: 1.5rem;
+        line-height: 2rem;
+    }
+    
+    .hero-section .hero-description {
+        font-size: 1.25rem;
+        line-height: 1.75rem;
+    }
+}
+
+/* Hero section variant-specific styles */
+.hero-section--centered {
+    text-align: center;
+}
+
+.hero-section--split-screen {
+    display: flex;
+    align-items: stretch;
+}
+
+.hero-section--video .hero-background video {
+    object-fit: cover;
+    width: 100%;
+    height: 100%;
+}
+
+.hero-section--minimal {
+    padding: var(--hero-desktop-padding, 3rem);
+}
+
+.hero-section--feature .feature-grid {
+    display: grid;
+    gap: var(--hero-desktop-gap, 2rem);
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+.hero-section--testimonial .testimonial-carousel {
+    overflow: hidden;
+}
+
+.hero-section--product .product-gallery {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.hero-section--service .trust-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.hero-section--cta .cta-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+}
+
+@media (min-width: 768px) {
+    .hero-section--cta .cta-buttons {
+        flex-direction: row;
+        justify-content: center;
+    }
+}
+
+.hero-section--gallery .gallery-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+/* Animation utilities for hero sections */
+.hero-section.animate-fade-in {
+    animation: heroFadeIn 0.6s ease-out;
+}
+
+.hero-section.animate-slide-up {
+    animation: heroSlideUp 0.8s ease-out;
+}
+
+.hero-section.animate-scale-in {
+    animation: heroScaleIn 0.5s ease-out;
+}
+
+@keyframes heroFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes heroSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(2rem);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes heroScaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .hero-section,
+    .hero-section * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .hero-section {
+        --hero-text-color: #000000;
+        --hero-background-color: #ffffff;
+        --hero-border-color: #000000;
+        --hero-primary-color: #000000;
+        --hero-secondary-color: #666666;
+        --hero-accent-color: #000000;
+    }
+    
+    .dark.hero-section {
+        --hero-text-color: #ffffff;
+        --hero-background-color: #000000;
+        --hero-border-color: #ffffff;
+        --hero-primary-color: #ffffff;
+        --hero-secondary-color: #cccccc;
+        --hero-accent-color: #ffffff;
+    }
+}
+
+/* Custom prose styles for section previews */
 .prose {
     color: inherit;
     max-width: none;

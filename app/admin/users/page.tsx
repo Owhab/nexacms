@@ -14,6 +14,7 @@ import {
     ClockIcon,
     UserIcon
 } from 'lucide-react'
+import Image from 'next/image'
 
 interface User {
     id: string
@@ -68,10 +69,7 @@ export default function UsersPage() {
         password: ''
     })
 
-    useEffect(() => {
-        fetchUsers()
-        fetchInvitations()
-    }, [search, roleFilter, statusFilter])
+    
 
     const fetchUsers = async () => {
         try {
@@ -103,6 +101,12 @@ export default function UsersPage() {
             console.error('Error fetching invitations:', error)
         }
     }
+
+    useEffect(() => {
+        fetchUsers()
+        fetchInvitations()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [search, roleFilter, statusFilter])
 
     const handleInviteUser = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -352,7 +356,7 @@ export default function UsersPage() {
                                             <div className="flex items-center">
                                                 <div className="flex-shrink-0 h-10 w-10">
                                                     {user.avatar ? (
-                                                        <img
+                                                        <Image
                                                             src={user.avatar}
                                                             alt={user.name || user.email}
                                                             className="h-10 w-10 rounded-full"

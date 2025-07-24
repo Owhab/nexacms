@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Button } from './button'
 import { SearchIcon, ImageIcon, VideoIcon, FileIcon, TrashIcon } from 'lucide-react'
 import { MediaItem } from '@/lib/types/media'
+import Image from 'next/image'
 
 interface MediaLibraryProps {
     isOpen: boolean
@@ -29,11 +30,7 @@ export function MediaLibrary({
     const [page, setPage] = useState(1)
     const [totalPages, setTotalPages] = useState(1)
 
-    useEffect(() => {
-        if (isOpen) {
-            fetchMedia()
-        }
-    }, [isOpen, search, page, category, type])
+    
 
     const fetchMedia = async () => {
         setLoading(true)
@@ -59,6 +56,13 @@ export function MediaLibrary({
             setLoading(false)
         }
     }
+
+    useEffect(() => {
+        if (isOpen) {
+            fetchMedia()
+        }
+         // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen, search, page, category, type])
 
     const handleSelect = (mediaItem: MediaItem) => {
         if (multiple) {
@@ -184,7 +188,7 @@ export function MediaLibrary({
                                     {/* Media preview */}
                                     <div className="aspect-square bg-gray-100 flex items-center justify-center">
                                         {item.type === 'IMAGE' ? (
-                                            <img
+                                            <Image
                                                 src={item.url}
                                                 alt={item.altText || item.fileName}
                                                 className="w-full h-full object-cover"

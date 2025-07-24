@@ -4,6 +4,7 @@ import { useState, useRef } from 'react'
 import { Button } from './button'
 import { UploadIcon, ImageIcon, VideoIcon, FileIcon, XIcon } from 'lucide-react'
 import { MediaItem } from '@/lib/types/media'
+import Image from 'next/image'
 
 interface MediaUploadProps {
     onUpload: (media: MediaItem) => void
@@ -180,7 +181,7 @@ export function MediaUpload({
 
                             {media.type === 'IMAGE' && (
                                 <div className="mt-3">
-                                    <img
+                                    <Image
                                         src={media.url}
                                         alt={media.altText || media.fileName}
                                         className="w-full h-32 object-cover rounded"

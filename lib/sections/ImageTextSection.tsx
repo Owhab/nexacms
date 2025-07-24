@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { MediaPicker } from '@/components/ui/MediaPicker'
+import Image from 'next/image'
 
 interface ImageTextSectionProps {
     image?: string
@@ -37,7 +38,7 @@ export function ImageTextSectionPreview({
                     {/* Image */}
                     <div className="flex-shrink-0" style={{ width: imageWidth }}>
                         {image ? (
-                            <img
+                            <Image
                                 src={image}
                                 alt={imageAlt || title}
                                 className="w-full h-auto rounded-lg shadow-lg"

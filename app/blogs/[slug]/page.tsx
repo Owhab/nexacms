@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
 import { SiteNavigation } from '@/components/public/SiteNavigation'
 import { SiteFooter } from '@/components/public/SiteFooter'
+import Image from 'next/image'
 
 interface BlogPost {
     id: string
@@ -306,7 +307,7 @@ function RelatedPosts({ posts }: { posts: RelatedPost[] }) {
                     <article key={post.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
                         {post.featuredImage && (
                             <div className="aspect-w-16 aspect-h-9">
-                                <img
+                                <Image
                                     src={post.featuredImage}
                                     alt={post.title}
                                     className="w-full h-32 object-cover"
@@ -412,7 +413,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
                     <div className="flex flex-wrap items-center gap-6 text-gray-600 mb-8">
                         <div className="flex items-center space-x-3">
                             {post.author.avatar && (
-                                <img
+                                <Image
                                     src={post.author.avatar}
                                     alt={post.author.name}
                                     className="w-10 h-10 rounded-full"
@@ -462,7 +463,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
             {/* Featured Image */}
             {post.featuredImage && (
                 <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 mb-12">
-                    <img
+                    <Image
                         src={post.featuredImage}
                         alt={post.title}
                         className="w-full h-64 md:h-96 object-cover rounded-xl shadow-2xl"
@@ -502,7 +503,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
                                 <div key={comment.id} className="bg-gray-50 rounded-lg p-6">
                                     <div className="flex items-start space-x-4">
                                         {comment.author.avatar && (
-                                            <img
+                                            <Image
                                                 src={comment.author.avatar}
                                                 alt={comment.author.name}
                                                 className="w-10 h-10 rounded-full flex-shrink-0"
@@ -522,7 +523,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
                                                         <div key={reply.id} className="bg-white rounded-lg p-4">
                                                             <div className="flex items-start space-x-3">
                                                                 {reply.author.avatar && (
-                                                                    <img
+                                                                    <Image
                                                                         src={reply.author.avatar}
                                                                         alt={reply.author.name}
                                                                         className="w-8 h-8 rounded-full flex-shrink-0"

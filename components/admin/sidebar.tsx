@@ -103,13 +103,13 @@ export function AdminSidebar() {
                     </a>
 
                     <a
-                        href="/blog"
+                        href="/blogs"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center w-full px-3 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-md transition-colors"
                     >
                         <BookOpenIcon className="mr-3 h-5 w-5" />
-                        Preview Blog
+                        Preview Blogs
                         <ExternalLinkIcon className="ml-auto h-4 w-4" />
                     </a>
                 </div>

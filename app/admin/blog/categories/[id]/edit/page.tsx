@@ -36,11 +36,7 @@ export default function EditCategoryPage({ params }: { params: { id: string } })
         isActive: true
     })
 
-    useEffect(() => {
-        fetchCategory()
-    }, [params.id])
-
-    const fetchCategory = async () => {
+const fetchCategory = async () => {
         try {
             setLoading(true)
 
@@ -70,6 +66,12 @@ export default function EditCategoryPage({ params }: { params: { id: string } })
             setLoading(false)
         }
     }
+
+    useEffect(() => {
+        fetchCategory()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [params.id])
+
 
     const generateSlug = (name: string) => {
         return name
@@ -145,7 +147,7 @@ export default function EditCategoryPage({ params }: { params: { id: string } })
             <div className="p-6">
                 <div className="text-center">
                     <h1 className="text-2xl font-bold text-gray-900 mb-4">Category Not Found</h1>
-                    <p className="text-gray-600 mb-4">The category you're looking for doesn't exist.</p>
+                    <p className="text-gray-600 mb-4">The category you&apos;re looking for doesn&apos;t exist.</p>
                     <button
                         onClick={() => router.push('/admin/blog')}
                         className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"

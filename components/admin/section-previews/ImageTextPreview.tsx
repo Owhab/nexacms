@@ -1,3 +1,5 @@
+import Image from "next/image"
+
 interface ImageTextPreviewProps {
     props: any
 }
@@ -8,7 +10,7 @@ export function ImageTextPreview({ props }: ImageTextPreviewProps) {
             <div className={`grid grid-cols-1 md:grid-cols-2 gap-6 items-center ${props.layout === 'right' ? 'md:grid-flow-col-dense' : ''}`}>
                 <div className={props.layout === 'right' ? 'md:col-start-2' : ''}>
                     {props.image ? (
-                        <img
+                        <Image
                             src={props.image}
                             alt={props.imageAlt || ''}
                             className="w-full h-auto rounded-lg shadow-sm"

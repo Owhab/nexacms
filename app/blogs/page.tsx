@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { Suspense } from 'react'
 import { SiteNavigation } from '@/components/public/SiteNavigation'
 import { SiteFooter } from '@/components/public/SiteFooter'
+import Image from 'next/image'
 
 interface BlogPost {
     id: string
@@ -195,7 +196,7 @@ function BlogPostCard({ post }: { post: BlogPost }) {
         <article className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-200 group">
             {post.featuredImage && (
                 <div className="aspect-w-16 aspect-h-9 overflow-hidden">
-                    <img
+                    <Image
                         src={post.featuredImage}
                         alt={post.title}
                         className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-200"
@@ -264,7 +265,7 @@ function BlogPostCard({ post }: { post: BlogPost }) {
                     <div className="flex items-center space-x-3">
                         <div className="flex items-center space-x-1">
                             {post.author.avatar && (
-                                <img
+                                <Image
                                     src={post.author.avatar}
                                     alt={post.author.name}
                                     className="w-4 h-4 rounded-full"
@@ -440,7 +441,7 @@ async function BlogsPageContent() {
                             </svg>
                             <h3 className="mt-2 text-sm font-medium text-gray-900">No blog posts</h3>
                             <p className="mt-1 text-sm text-gray-500">
-                                We're working on some great content. Check back soon!
+                                We&apos;re working on some great content. Check back soon!
                             </p>
                         </div>
                     </div>

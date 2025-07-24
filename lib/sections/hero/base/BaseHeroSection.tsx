@@ -15,8 +15,14 @@ import {
     getResponsiveClasses,
     generateAnimationClasses,
     generateAccessibilityProps,
-    generateAriaLabel
+    generateAriaLabel,
+    generateResponsiveClasses,
+    getResponsiveSpacingClasses,
+    generateSemanticProps,
+    getMotionSafeClasses,
+    generateVideoAccessibilityProps
 } from '../utils'
+import { useThemeIntegration } from '../hooks/useThemeIntegration'
 
 interface BaseHeroSectionProps extends BaseHeroProps {
     children: React.ReactNode
@@ -29,8 +35,9 @@ interface BaseHeroSectionProps extends BaseHeroProps {
  * Base Hero Section Component
  * 
  * Provides common functionality for all hero section variants including:
- * - Theme integration with CSS variables
- * - Responsive design handling
+ * - Enhanced theme integration with site configuration context
+ * - Dynamic CSS variable mapping
+ * - Responsive design handling with breakpoint support
  * - Background configuration
  * - Animation support
  * - Accessibility features
@@ -49,31 +56,43 @@ export function BaseHeroSection({
     style = {},
     ...props
 }: BaseHeroSectionProps) {
-    // Generate CSS variables for theme integration
-    const cssVariables = generateCSSVariables(theme)
+    // Use enhanced theme integration hook
+    const {
+        theme: integratedTheme,
+        cssVariables,
+        themeClasses,
+        elementRef,
+        isThemeCompatible
+    } = useThemeIntegration(theme, responsive)
 
-    // Generate responsive classes
-    const responsiveClasses = getResponsiveClasses(responsive, 'padding')
+    // Generate responsive classes with enhanced breakpoint handling
+    const responsiveLayoutClasses = generateResponsiveClasses(responsive, ['direction', 'alignment', 'justification'])
+    const responsiveSpacingClasses = getResponsiveSpacingClasses(responsive)
 
-    // Generate animation classes
-    const animationClasses = generateAnimationClasses(animation)
+    // Generate motion-safe animation classes
+    const animationClasses = getMotionSafeClasses(animation)
 
     // Generate accessibility props
     const accessibilityProps = generateAccessibilityProps(accessibility)
+    const semanticProps = generateSemanticProps(variant, true)
 
     // Generate ARIA label
-    const ariaLabel = generateAriaLabel(variant, accessibilityProps['aria-label'])
+    const ariaLabel = generateAriaLabel(variant, accessibilityProps['aria-label'] || semanticProps['aria-label'])
 
-    // Combine all CSS classes
+    // Combine all CSS classes with theme-aware classes
     const containerClasses = [
         'hero-section',
         `hero-section--${variant}`,
         'relative',
         'overflow-hidden',
-        responsiveClasses,
+        responsiveLayoutClasses,
+        responsiveSpacingClasses,
+        ...themeClasses.all,
         ...animationClasses,
         containerClassName,
-        className
+        className,
+        // Add theme compatibility indicator
+        !isThemeCompatible && 'theme-incompatible'
     ].filter(Boolean).join(' ')
 
     const contentClasses = [
@@ -85,7 +104,7 @@ export function BaseHeroSection({
         contentClassName
     ].filter(Boolean).join(' ')
 
-    // Combine styles
+    // Combine styles with enhanced CSS variables
     const combinedStyles = {
         ...cssVariables,
         ...style
@@ -93,10 +112,13 @@ export function BaseHeroSection({
 
     return (
         <section
+            ref={elementRef}
             id={id}
             className={containerClasses}
             style={combinedStyles}
             aria-label={ariaLabel}
+            data-hero-variant={variant}
+            data-theme-compatible={isThemeCompatible}
             {...accessibilityProps}
             {...props}
         >
@@ -153,9 +175,13 @@ export function HeroBackground({ background, className = '' }: HeroBackgroundPro
                     muted={background.video.muted}
                     controls={background.video.controls}
                     poster={background.video.poster}
-                    aria-hidden="true"
+                    {...generateVideoAccessibilityProps(background.video, { 
+                        isBackground: true,
+                        hasAudio: !background.video.muted 
+                    })}
                 >
                     <source src={background.video.url} type="video/mp4" />
+                    <track kind="captions" src="" label="No audio" default />
                     Your browser does not support the video tag.
                 </video>
             )}

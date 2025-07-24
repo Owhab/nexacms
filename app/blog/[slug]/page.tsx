@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
 import { SiteNavigation } from '@/components/public/SiteNavigation'
 import { SiteFooter } from '@/components/public/SiteFooter'
+import Image from 'next/image'
 
 interface BlogPost {
     id: string
@@ -247,7 +248,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
                     <div className="flex items-center space-x-4 text-gray-600 mb-6">
                         <div className="flex items-center space-x-2">
                             {post.author.avatar && (
-                                <img
+                                <Image
                                     src={post.author.avatar}
                                     alt={post.author.name}
                                     className="w-8 h-8 rounded-full"
@@ -291,7 +292,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
             {/* Featured Image */}
             {post.featuredImage && (
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 mb-8">
-                    <img
+                    <Image
                         src={post.featuredImage}
                         alt={post.title}
                         className="w-full h-64 md:h-96 object-cover rounded-lg shadow-lg"
@@ -324,7 +325,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
                                 <div key={comment.id} className="bg-gray-50 rounded-lg p-6">
                                     <div className="flex items-center space-x-3 mb-3">
                                         {comment.author.avatar && (
-                                            <img
+                                            <Image
                                                 src={comment.author.avatar}
                                                 alt={comment.author.name}
                                                 className="w-8 h-8 rounded-full"
@@ -344,7 +345,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
                                                 <div key={reply.id} className="bg-white rounded-lg p-4">
                                                     <div className="flex items-center space-x-3 mb-2">
                                                         {reply.author.avatar && (
-                                                            <img
+                                                            <Image
                                                                 src={reply.author.avatar}
                                                                 alt={reply.author.name}
                                                                 className="w-6 h-6 rounded-full"

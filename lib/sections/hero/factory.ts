@@ -7,6 +7,12 @@ import {
     HeroPreviewProps
 } from './types'
 import { HERO_SECTION_REGISTRY } from './registry'
+import { 
+    lazyLoadHeroVariant, 
+    lazyLoadHeroEditor, 
+    lazyLoadHeroPreview,
+    HeroPerformanceMonitor
+} from './performance'
 
 /**
  * Hero Section Factory
@@ -212,86 +218,95 @@ export class HeroSectionFactory {
      * Internal method to load component
      */
     private static async loadComponentInternal(variant: HeroVariant): Promise<React.ComponentType<HeroProps>> {
-        const componentName = this.getComponentName(variant)
+        const monitor = new HeroPerformanceMonitor()
+        
+        return monitor.measureAsyncOperation(`load-component-${variant}`, (async () => {
+            try {
+                // Use lazy loading utility for better performance
+                const LazyComponent = lazyLoadHeroVariant(variant)
+                return LazyComponent
+            } catch (error) {
+                // Fallback to base component if specific variant not found
+                console.warn(`Specific component not found for ${variant}, using base component`)
+                const { BaseHeroSection } = await import('./base/BaseHeroSection')
 
-        try {
-            // Dynamic import based on variant
-            const module = await import(`./variants/${componentName}`)
-            return module.default || module[componentName]
-        } catch (error) {
-            // Fallback to base component if specific variant not found
-            console.warn(`Specific component not found for ${variant}, using base component`)
-            const { BaseHeroSection } = await import('./base/BaseHeroSection')
+                // Create a wrapper that matches the expected interface
+                const FallbackComponent = (props: HeroProps) => {
+                    const baseProps = {
+                        ...props,
+                        children: React.createElement('div', {
+                            className: 'p-8 text-center'
+                        }, `Hero variant "${variant}" not implemented`)
+                    }
+                    return React.createElement(BaseHeroSection, baseProps)
+                }
 
-            // Create a wrapper that matches the expected interface
-            const FallbackComponent = (props: HeroProps) => {
-                return React.createElement(BaseHeroSection, {
-                    ...props,
-                    children: React.createElement('div', {
-                        className: 'p-8 text-center'
-                    }, `Hero variant "${variant}" not implemented`)
-                })
+                return FallbackComponent
             }
-
-            return FallbackComponent
-        }
+        })())
     }
 
     /**
      * Internal method to load editor
      */
     private static async loadEditorInternal(variant: HeroVariant): Promise<React.ComponentType<HeroEditorProps>> {
-        const editorName = this.getEditorName(variant)
-
-        try {
-            // Dynamic import based on variant
-            const module = await import(`./editors/${editorName}`)
-            return module.default || module[editorName]
-        } catch (error) {
-            // Fallback to base editor if specific variant not found
-            console.warn(`Specific editor not found for ${variant}, using base editor`)
-            const { BaseHeroEditor } = await import('./editors/BaseHeroEditor')
-            return BaseHeroEditor as React.ComponentType<HeroEditorProps>
-        }
+        const monitor = new HeroPerformanceMonitor()
+        
+        return monitor.measureAsyncOperation(`load-editor-${variant}`, (async () => {
+            try {
+                // Use lazy loading utility for better performance
+                const LazyEditor = lazyLoadHeroEditor(variant)
+                return LazyEditor
+            } catch (error) {
+                // Fallback to base editor if specific variant not found
+                console.warn(`Specific editor not found for ${variant}, using base editor`)
+                const { BaseHeroEditor } = await import('./editors/BaseHeroEditor')
+                return BaseHeroEditor as React.ComponentType<HeroEditorProps>
+            }
+        })())
     }
 
     /**
      * Internal method to load preview
      */
     private static async loadPreviewInternal(variant: HeroVariant): Promise<React.ComponentType<HeroPreviewProps>> {
-        const previewName = this.getPreviewName(variant)
+        const monitor = new HeroPerformanceMonitor()
+        
+        return monitor.measureAsyncOperation(`load-preview-${variant}`, (async () => {
+            try {
+                // Use lazy loading utility for better performance
+                const LazyPreview = lazyLoadHeroPreview(variant)
+                return LazyPreview
+            } catch (error) {
+                // Fallback to base preview if specific variant not found
+                console.warn(`Specific preview not found for ${variant}, using base preview`)
+                const { BaseHeroPreview } = await import('./previews/BaseHeroPreview')
 
-        try {
-            // Dynamic import based on variant
-            const module = await import(`./previews/${previewName}`)
-            return module.default || module[previewName]
-        } catch (error) {
-            // Fallback to base preview if specific variant not found
-            console.warn(`Specific preview not found for ${variant}, using base preview`)
-            const { BaseHeroPreview } = await import('./previews/BaseHeroPreview')
+                // Create a wrapper that matches the expected interface
+                const FallbackPreview = (props: HeroPreviewProps) => {
+                    const baseProps = {
+                        ...props,
+                        children: React.createElement('div', {
+                            className: 'p-8 text-center'
+                        }, `Hero preview for variant "${variant}" not implemented`)
+                    }
+                    return React.createElement(BaseHeroPreview, baseProps)
+                }
 
-            // Create a wrapper that matches the expected interface
-            const FallbackPreview = (props: HeroPreviewProps) => {
-                return React.createElement(BaseHeroPreview, {
-                    ...props,
-                    children: React.createElement('div', {
-                        className: 'p-8 text-center'
-                    }, `Hero preview for variant "${variant}" not implemented`)
-                })
+                return FallbackPreview
             }
-
-            return FallbackPreview
-        }
+        })())
     }
 
     /**
      * Get component name from variant
      */
     private static getComponentName(variant: HeroVariant): string {
-        return variant
+        const baseName = variant
             .split('-')
             .map(word => word.charAt(0).toUpperCase() + word.slice(1))
             .join('')
+        return `Hero${baseName}`
     }
 
     /**

@@ -51,10 +51,6 @@ export default function BlogManagementPage() {
     const [activeTab, setActiveTab] = useState<'posts' | 'categories' | 'tags'>('posts')
     const router = useRouter()
 
-    useEffect(() => {
-        fetchData()
-    }, [activeTab])
-
     const fetchData = async () => {
         try {
             setLoading(true)
@@ -82,6 +78,12 @@ export default function BlogManagementPage() {
             setLoading(false)
         }
     }
+
+    useEffect(() => {
+        fetchData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeTab])
+
 
     const handleDeletePost = async (postId: string) => {
         if (!confirm('Are you sure you want to delete this post?')) return

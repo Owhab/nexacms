@@ -92,7 +92,7 @@ export default function PagesPage() {
                             </h3>
                             <div className="mt-2 text-sm text-blue-700">
                                 <p>
-                                    You haven't created a homepage yet. Create a page with the slug "/" to replace the default landing page.
+                                    You haven&apos;t created a homepage yet. Create a page with the slug &quot;/&quot; to replace the default landing page.
                                 </p>
                             </div>
                             <div className="mt-4">

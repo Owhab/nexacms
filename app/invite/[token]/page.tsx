@@ -24,10 +24,7 @@ export default function InvitationPage({ params }: { params: { token: string } }
     })
     const router = useRouter()
 
-    useEffect(() => {
-        fetchInvitation()
-    }, [])
-
+    
     const fetchInvitation = async () => {
         try {
             const response = await fetch(`/api/invite/${params.token}`)
@@ -44,6 +41,11 @@ export default function InvitationPage({ params }: { params: { token: string } }
             setLoading(false)
         }
     }
+    useEffect(() => {
+        fetchInvitation()
+         // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target
@@ -132,7 +134,7 @@ export default function InvitationPage({ params }: { params: { token: string } }
             <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
                 <div className="text-center mb-8">
                     <UserPlusIcon className="h-16 w-16 text-blue-600 mx-auto mb-4" />
-                    <h1 className="text-2xl font-bold text-gray-900 mb-2">You're Invited!</h1>
+                    <h1 className="text-2xl font-bold text-gray-900 mb-2">You&apos;re Invited!</h1>
                     <p className="text-gray-600">
                         <strong>{invitation?.inviterName}</strong> has invited you to join NexaCMS as a{' '}
                         <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">

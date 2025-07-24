@@ -7,6 +7,9 @@ import {
     getSectionsByCategory,
     searchSections,
     getAllCategories,
+    getHeroSections,
+    getHeroSectionsByTag,
+    searchHeroSections,
     SECTION_CATEGORIES
 } from '@/lib/sections/registry'
 import { SearchIcon, XIcon, PlusIcon } from 'lucide-react'
@@ -20,9 +23,14 @@ interface SectionLibraryProps {
 export function SectionLibrary({ isOpen, onClose, onAddSection }: SectionLibraryProps) {
     const [searchQuery, setSearchQuery] = useState('')
     const [selectedCategory, setSelectedCategory] = useState<string>('all')
+    const [heroFilter, setHeroFilter] = useState<string>('all') // For hero-specific filtering
 
     const sections = useMemo(() => {
         if (searchQuery) {
+            // Enhanced search that includes hero-specific search
+            if (selectedCategory === SECTION_CATEGORIES.HERO) {
+                return searchHeroSections(searchQuery)
+            }
             return searchSections(searchQuery)
         }
 
@@ -30,10 +38,32 @@ export function SectionLibrary({ isOpen, onClose, onAddSection }: SectionLibrary
             return getActiveSections()
         }
 
+        if (selectedCategory === SECTION_CATEGORIES.HERO) {
+            const heroSections = getHeroSections()
+            if (heroFilter === 'all') {
+                return heroSections
+            }
+            return getHeroSectionsByTag(heroFilter)
+        }
+
         return getSectionsByCategory(selectedCategory)
-    }, [searchQuery, selectedCategory])
+    }, [searchQuery, selectedCategory, heroFilter])
 
     const categories = getAllCategories()
+    
+    // Hero-specific filter options based on actual hero variant tags
+    const heroFilterOptions = [
+        { label: 'All Hero Sections', value: 'all' },
+        { label: 'Traditional & Centered', value: 'centered' },
+        { label: 'Modern Layouts', value: 'modern' },
+        { label: 'Media & Visual', value: 'multimedia' },
+        { label: 'Minimal & Clean', value: 'minimal' },
+        { label: 'Business & Service', value: 'business' },
+        { label: 'E-commerce & Product', value: 'e-commerce' },
+        { label: 'Conversion & CTA', value: 'cta' },
+        { label: 'Social Proof', value: 'testimonial' },
+        { label: 'Feature Showcase', value: 'features' }
+    ]
 
     if (!isOpen) return null
 
@@ -84,7 +114,10 @@ export function SectionLibrary({ isOpen, onClose, onAddSection }: SectionLibrary
                         {/* Category Filter */}
                         <div className="flex flex-wrap gap-2">
                             <button
-                                onClick={() => setSelectedCategory('all')}
+                                onClick={() => {
+                                    setSelectedCategory('all')
+                                    setHeroFilter('all')
+                                }}
                                 className={`px-3 py-1 text-sm rounded-full transition-colors ${selectedCategory === 'all'
                                         ? 'bg-blue-100 text-blue-700 border border-blue-200'
                                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -95,7 +128,12 @@ export function SectionLibrary({ isOpen, onClose, onAddSection }: SectionLibrary
                             {categories.map((category) => (
                                 <button
                                     key={category}
-                                    onClick={() => setSelectedCategory(category)}
+                                    onClick={() => {
+                                        setSelectedCategory(category)
+                                        if (category !== SECTION_CATEGORIES.HERO) {
+                                            setHeroFilter('all')
+                                        }
+                                    }}
                                     className={`px-3 py-1 text-sm rounded-full transition-colors ${selectedCategory === category
                                             ? 'bg-blue-100 text-blue-700 border border-blue-200'
                                             : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -105,6 +143,27 @@ export function SectionLibrary({ isOpen, onClose, onAddSection }: SectionLibrary
                                 </button>
                             ))}
                         </div>
+
+                        {/* Hero-specific filters */}
+                        {selectedCategory === SECTION_CATEGORIES.HERO && (
+                            <div className="border-t border-gray-200 pt-4">
+                                <h4 className="text-sm font-medium text-gray-700 mb-2">Hero Section Types</h4>
+                                <div className="flex flex-wrap gap-2">
+                                    {heroFilterOptions.map((option) => (
+                                        <button
+                                            key={option.value}
+                                            onClick={() => setHeroFilter(option.value)}
+                                            className={`px-3 py-1 text-sm rounded-full transition-colors ${heroFilter === option.value
+                                                    ? 'bg-purple-100 text-purple-700 border border-purple-200'
+                                                    : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                                                }`}
+                                        >
+                                            {option.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Section Grid */}
@@ -146,9 +205,16 @@ export function SectionLibrary({ isOpen, onClose, onAddSection }: SectionLibrary
                                         <p className="text-sm text-gray-500 mb-3 line-clamp-2">{section.description}</p>
 
                                         <div className="flex items-center justify-between">
-                                            <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">
-                                                {section.category}
-                                            </span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">
+                                                    {section.category}
+                                                </span>
+                                                {section.variant && (
+                                                    <span className="text-xs text-purple-600 bg-purple-50 px-2 py-1 rounded border border-purple-200">
+                                                        {section.variant}
+                                                    </span>
+                                                )}
+                                            </div>
                                             {!section.isActive && (
                                                 <span className="text-xs text-orange-600 bg-orange-100 px-2 py-1 rounded">
                                                     Coming Soon
@@ -184,10 +250,18 @@ export function SectionLibrary({ isOpen, onClose, onAddSection }: SectionLibrary
                     <div className="p-6 border-t border-gray-200 bg-gray-50">
                         <div className="flex items-center justify-between text-sm text-gray-500">
                             <span>
-                                Showing {sections.length} of {getActiveSections().length} available sections
+                                {selectedCategory === SECTION_CATEGORIES.HERO ? (
+                                    <>Showing {sections.length} of {getHeroSections().length} hero variants</>
+                                ) : (
+                                    <>Showing {sections.length} of {getActiveSections().length} available sections</>
+                                )}
                             </span>
                             <span>
-                                More sections coming soon!
+                                {selectedCategory === SECTION_CATEGORIES.HERO ? (
+                                    <>10 hero variants available!</>
+                                ) : (
+                                    <>More sections coming soon!</>
+                                )}
                             </span>
                         </div>
                     </div>

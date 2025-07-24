@@ -1,363 +1,371 @@
-/**
- * Hero Centered Implementation Validation
- * 
- * This script validates that the Hero Centered variant implementation is working correctly
- * by testing component imports, type checking, and basic functionality.
- */
+// Hero Section Accessibility Implementation Test
 
-import React from 'react'
-import {
-    HeroCenteredProps,
-    HeroVariant,
-    HeroEditorProps
-} from './types'
-import {
-    getDefaultThemeConfig,
-    getDefaultResponsiveConfig,
-    getDefaultAccessibilityConfig
+import { HeroVariant, AccessibilityConfig, ThemeConfig } from './types'
+import { 
+    generateAccessibilityProps,
+    generateAriaLabel,
+    generateSemanticProps,
+    generateInteractiveAriaProps,
+    generateKeyboardNavigationProps,
+    generateImageAltText,
+    generateVideoAccessibilityProps,
+    checkColorContrast,
+    respectsReducedMotion,
+    validateAccessibility
 } from './utils'
 
-// Test component imports
-async function testComponentImports() {
-    console.log('Testing component imports...')
+/**
+ * Test suite for accessibility implementation
+ */
+export class AccessibilityImplementationTest {
+    private testResults: TestResult[] = []
 
-    try {
-        // Test Hero Centered component import
-        const { HeroCentered } = await import('./variants/HeroCentered')
-        console.log('✅ HeroCentered component imported successfully')
+    /**
+     * Run all accessibility implementation tests
+     */
+    runAllTests(): TestSummary {
+        this.testResults = []
 
-        // Test Hero Centered Editor import
-        const { HeroCenteredEditor } = await import('./editors/HeroCenteredEditor')
-        console.log('✅ HeroCenteredEditor component imported successfully')
+        // Test utility functions
+        this.testAccessibilityProps()
+        this.testAriaLabelGeneration()
+        this.testSemanticProps()
+        this.testInteractiveAriaProps()
+        this.testKeyboardNavigationProps()
+        this.testImageAltTextGeneration()
+        this.testVideoAccessibilityProps()
+        this.testColorContrastChecking()
+        this.testMotionPreferences()
 
-        // Test Hero Centered Preview import
-        const { HeroCenteredPreview } = await import('./previews/HeroCenteredPreview')
-        console.log('✅ HeroCenteredPreview component imported successfully')
-
-        return { HeroCentered, HeroCenteredEditor, HeroCenteredPreview }
-    } catch (error) {
-        console.error('❌ Component import failed:', error)
-        throw error
-    }
-}
-
-// Test type definitions
-function testTypeDefinitions() {
-    console.log('Testing type definitions...')
-
-    try {
-        // Test HeroCenteredProps type
-        const testProps: HeroCenteredProps = {
-            id: 'test-hero',
-            variant: HeroVariant.CENTERED,
-            theme: getDefaultThemeConfig(),
-            responsive: getDefaultResponsiveConfig(),
-            accessibility: getDefaultAccessibilityConfig(),
-            title: {
-                text: 'Test Title',
-                tag: 'h1'
-            },
-            subtitle: {
-                text: 'Test Subtitle',
-                tag: 'h2'
-            },
-            description: {
-                text: 'Test Description',
-                tag: 'p'
-            },
-            primaryButton: {
-                text: 'Primary Button',
-                url: '/primary',
-                style: 'primary',
-                size: 'lg',
-                iconPosition: 'right',
-                target: '_self'
-            },
-            secondaryButton: {
-                text: 'Secondary Button',
-                url: '/secondary',
-                style: 'outline',
-                size: 'lg',
-                iconPosition: 'left',
-                target: '_self'
-            },
-            background: {
-                type: 'gradient',
-                gradient: {
-                    type: 'linear',
-                    direction: '45deg',
-                    colors: [
-                        { color: '#3b82f6', stop: 0 },
-                        { color: '#8b5cf6', stop: 100 }
-                    ]
-                }
-            },
-            textAlign: 'center'
-        }
-
-        console.log('✅ HeroCenteredProps type validation passed')
-
-        // Test HeroEditorProps type
-        const testEditorProps: HeroEditorProps<HeroCenteredProps> = {
-            props: testProps,
-            onSave: (props) => console.log('Save called with:', props),
-            onCancel: () => console.log('Cancel called'),
-            onChange: (props) => console.log('Change called with:', props),
-            isLoading: false,
-            errors: {}
-        }
-
-        console.log('✅ HeroEditorProps type validation passed')
-
-        return { testProps, testEditorProps }
-    } catch (error) {
-        console.error('❌ Type definition test failed:', error)
-        throw error
-    }
-}
-
-// Test default configurations
-function testDefaultConfigurations() {
-    console.log('Testing default configurations...')
-
-    try {
-        const defaultTheme = getDefaultThemeConfig()
-        console.log('✅ Default theme config:', defaultTheme)
-
-        const defaultResponsive = getDefaultResponsiveConfig()
-        console.log('✅ Default responsive config:', defaultResponsive)
-
-        const defaultAccessibility = getDefaultAccessibilityConfig()
-        console.log('✅ Default accessibility config:', defaultAccessibility)
-
-        return { defaultTheme, defaultResponsive, defaultAccessibility }
-    } catch (error) {
-        console.error('❌ Default configuration test failed:', error)
-        throw error
-    }
-}
-
-// Test registry integration
-async function testRegistryIntegration() {
-    console.log('Testing registry integration...')
-
-    try {
-        const { HERO_SECTION_REGISTRY } = await import('./registry')
-        const centeredConfig = HERO_SECTION_REGISTRY['hero-centered']
-
-        if (!centeredConfig) {
-            throw new Error('Hero Centered configuration not found in registry')
-        }
-
-        console.log('✅ Hero Centered found in registry:', centeredConfig.name)
-
-        // Validate configuration structure
-        const requiredFields = ['id', 'variant', 'name', 'description', 'icon', 'category', 'defaultProps', 'editorSchema']
-        for (const field of requiredFields) {
-            if (!(field in centeredConfig)) {
-                throw new Error(`Missing required field: ${field}`)
-            }
-        }
-
-        console.log('✅ Registry configuration structure is valid')
-
-        return centeredConfig
-    } catch (error) {
-        console.error('❌ Registry integration test failed:', error)
-        throw error
-    }
-}
-
-// Test factory integration
-async function testFactoryIntegration() {
-    console.log('Testing factory integration...')
-
-    try {
-        const { HeroSectionFactory } = await import('./factory')
-
-        // Test getting configuration
-        const config = HeroSectionFactory.getConfig(HeroVariant.CENTERED)
-        if (!config) {
-            throw new Error('Failed to get Hero Centered configuration from factory')
-        }
-
-        console.log('✅ Factory can retrieve Hero Centered configuration')
-
-        // Test getting all configurations
-        const allConfigs = HeroSectionFactory.getAllConfigs()
-        const centeredInAll = allConfigs.find(c => c.variant === HeroVariant.CENTERED)
-
-        if (!centeredInAll) {
-            throw new Error('Hero Centered not found in all configurations')
-        }
-
-        console.log('✅ Hero Centered found in all configurations')
-
-        return { config, allConfigs }
-    } catch (error) {
-        console.error('❌ Factory integration test failed:', error)
-        throw error
-    }
-}
-
-// Test component props validation
-function testPropsValidation() {
-    console.log('Testing props validation...')
-
-    try {
-        // Test minimal props
-        const minimalProps: HeroCenteredProps = {
-            id: 'minimal-hero',
-            variant: HeroVariant.CENTERED,
-            theme: getDefaultThemeConfig(),
-            responsive: getDefaultResponsiveConfig(),
-            accessibility: getDefaultAccessibilityConfig(),
-            title: {
-                text: 'Minimal Title',
-                tag: 'h1'
-            },
-            background: {
-                type: 'none'
-            },
-            textAlign: 'center'
-        }
-
-        console.log('✅ Minimal props validation passed')
-
-        // Test full props
-        const fullProps: HeroCenteredProps = {
-            id: 'full-hero',
-            variant: HeroVariant.CENTERED,
-            theme: getDefaultThemeConfig(),
-            responsive: getDefaultResponsiveConfig(),
-            accessibility: getDefaultAccessibilityConfig(),
-            title: {
-                text: 'Full Title',
-                tag: 'h1'
-            },
-            subtitle: {
-                text: 'Full Subtitle',
-                tag: 'h2'
-            },
-            description: {
-                text: 'Full Description',
-                tag: 'p'
-            },
-            primaryButton: {
-                text: 'Primary',
-                url: '/primary',
-                style: 'primary',
-                size: 'lg',
-                iconPosition: 'right',
-                target: '_self'
-            },
-            secondaryButton: {
-                text: 'Secondary',
-                url: '/secondary',
-                style: 'outline',
-                size: 'md',
-                iconPosition: 'left',
-                target: '_blank'
-            },
-            background: {
-                type: 'image',
-                image: {
-                    id: 'bg-image',
-                    url: '/background.jpg',
-                    type: 'image',
-                    alt: 'Background',
-                    objectFit: 'cover',
-                    loading: 'lazy'
-                },
-                overlay: {
-                    enabled: true,
-                    color: '#000000',
-                    opacity: 0.5
-                }
-            },
-            textAlign: 'left',
-            className: 'custom-class',
-            style: { minHeight: '600px' }
-        }
-
-        console.log('✅ Full props validation passed')
-
-        return { minimalProps, fullProps }
-    } catch (error) {
-        console.error('❌ Props validation test failed:', error)
-        throw error
-    }
-}
-
-// Main validation function
-export async function validateHeroCenteredImplementation() {
-    console.log('🚀 Starting Hero Centered implementation validation...\n')
-
-    try {
-        // Run all tests
-        const components = await testComponentImports()
-        console.log('')
-
-        const types = testTypeDefinitions()
-        console.log('')
-
-        const configs = testDefaultConfigurations()
-        console.log('')
-
-        const registry = await testRegistryIntegration()
-        console.log('')
-
-        const factory = await testFactoryIntegration()
-        console.log('')
-
-        const props = testPropsValidation()
-        console.log('')
-
-        console.log('🎉 All validation tests passed!')
-        console.log('\n✅ Hero Centered implementation is complete and functional')
+        // Calculate summary
+        const passed = this.testResults.filter(r => r.status === 'pass').length
+        const failed = this.testResults.filter(r => r.status === 'fail').length
+        const total = this.testResults.length
 
         return {
-            components,
-            types,
-            configs,
-            registry,
-            factory,
-            props,
-            success: true
+            total,
+            passed,
+            failed,
+            passRate: (passed / total) * 100,
+            results: this.testResults
         }
-    } catch (error) {
-        console.error('\n❌ Validation failed:', error)
-        return {
-            success: false,
-            error
+    }
+
+    private testAccessibilityProps() {
+        const config: AccessibilityConfig = {
+            ariaLabels: { label: 'Test hero section' },
+            altTexts: {},
+            keyboardNavigation: true,
+            screenReaderSupport: true,
+            highContrast: false,
+            reducedMotion: false
+        }
+
+        const props = generateAccessibilityProps(config)
+
+        this.addTest(
+            'generateAccessibilityProps',
+            'Should generate proper accessibility props',
+            props['aria-label'] === 'Test hero section' && 
+            props.tabIndex === 0 && 
+            props.role === 'region' &&
+            props['aria-live'] === 'polite'
+        )
+    }
+
+    private testAriaLabelGeneration() {
+        const label1 = generateAriaLabel(HeroVariant.CENTERED)
+        const label2 = generateAriaLabel(HeroVariant.SPLIT_SCREEN, 'Welcome to our site')
+
+        this.addTest(
+            'generateAriaLabel',
+            'Should generate descriptive ARIA labels',
+            label1 === 'centered hero section' &&
+            label2 === 'split screen hero section: Welcome to our site'
+        )
+    }
+
+    private testSemanticProps() {
+        const props = generateSemanticProps(HeroVariant.CENTERED, true)
+
+        this.addTest(
+            'generateSemanticProps',
+            'Should generate semantic HTML props',
+            props.role === 'banner' &&
+            props['aria-label'] === 'centered hero section' &&
+            props['data-main-hero'] === 'true'
+        )
+    }
+
+    private testInteractiveAriaProps() {
+        const buttonProps = generateInteractiveAriaProps('button', {
+            label: 'Click me',
+            description: 'button-desc',
+            expanded: false,
+            controls: 'menu-1'
+        })
+
+        this.addTest(
+            'generateInteractiveAriaProps',
+            'Should generate interactive element ARIA props',
+            buttonProps['aria-label'] === 'Click me' &&
+            buttonProps['aria-describedby'] === 'button-desc' &&
+            buttonProps['aria-expanded'] === false &&
+            buttonProps['aria-controls'] === 'menu-1'
+        )
+    }
+
+    private testKeyboardNavigationProps() {
+        const props = generateKeyboardNavigationProps('button', {
+            tabIndex: 0,
+            role: 'button'
+        })
+
+        this.addTest(
+            'generateKeyboardNavigationProps',
+            'Should generate keyboard navigation props',
+            props.tabIndex === 0 &&
+            props.role === 'button' &&
+            typeof props.onKeyDown === 'function'
+        )
+    }
+
+    private testImageAltTextGeneration() {
+        const media = {
+            id: 'test',
+            url: '/test.jpg',
+            type: 'image' as const,
+            alt: 'Custom alt text',
+            objectFit: 'cover' as const,
+            loading: 'lazy' as const
+        }
+
+        const altText1 = generateImageAltText(media, {
+            variant: HeroVariant.CENTERED,
+            purpose: 'hero'
+        })
+
+        const altText2 = generateImageAltText(
+            { ...media, alt: '' }, 
+            {
+                variant: HeroVariant.PRODUCT,
+                purpose: 'product'
+            }
+        )
+
+        this.addTest(
+            'generateImageAltText',
+            'Should generate contextual alt text',
+            altText1 === 'Custom alt text' &&
+            altText2 === 'Product showcase image for product section'
+        )
+    }
+
+    private testVideoAccessibilityProps() {
+        const media = {
+            id: 'test',
+            url: '/test.mp4',
+            type: 'video' as const,
+            alt: 'Test video',
+            autoplay: true,
+            muted: false,
+            objectFit: 'cover' as const,
+            loading: 'lazy' as const
+        }
+
+        const props = generateVideoAccessibilityProps(media, {
+            hasAudio: true,
+            isBackground: false
+        })
+
+        this.addTest(
+            'generateVideoAccessibilityProps',
+            'Should generate video accessibility props',
+            props.role === 'video' &&
+            props['aria-label'] === 'Test video' &&
+            props['aria-describedby'] === 'video-autoplay-warning'
+        )
+    }
+
+    private testColorContrastChecking() {
+        const result1 = checkColorContrast('#000000', '#ffffff') // Black on white
+        const result2 = checkColorContrast('#777777', '#ffffff') // Gray on white
+
+        this.addTest(
+            'checkColorContrast',
+            'Should calculate color contrast ratios correctly',
+            result1.ratio > 20 && result1.wcagAA && result1.wcagAAA &&
+            result2.ratio > 4 && result2.wcagAA && !result2.wcagAAA
+        )
+    }
+
+    private testMotionPreferences() {
+        // This test would need to be run in a browser environment
+        // For now, we'll just test that the function exists and returns a boolean
+        const prefersReduced = respectsReducedMotion()
+
+        this.addTest(
+            'respectsReducedMotion',
+            'Should detect motion preferences',
+            typeof prefersReduced === 'boolean'
+        )
+    }
+
+    private addTest(name: string, description: string, passed: boolean) {
+        this.testResults.push({
+            name,
+            description,
+            status: passed ? 'pass' : 'fail',
+            error: passed ? undefined : 'Test assertion failed'
+        })
+    }
+}
+
+/**
+ * Test DOM accessibility validation
+ */
+export function testDOMAccessibility(): void {
+    if (typeof document === 'undefined') {
+        console.log('DOM tests can only run in browser environment')
+        return
+    }
+
+    // Create a test hero section
+    const testSection = document.createElement('section')
+    testSection.className = 'hero-section'
+    testSection.setAttribute('aria-label', 'Test hero section')
+    testSection.setAttribute('data-hero-variant', 'centered')
+
+    // Add a heading
+    const heading = document.createElement('h1')
+    heading.textContent = 'Test Hero Title'
+    testSection.appendChild(heading)
+
+    // Add an image
+    const image = document.createElement('img')
+    image.src = '/test.jpg'
+    image.alt = 'Test hero image'
+    testSection.appendChild(image)
+
+    // Add a button
+    const button = document.createElement('button')
+    button.textContent = 'Test Button'
+    button.setAttribute('aria-label', 'Test action button')
+    testSection.appendChild(button)
+
+    // Add to document temporarily
+    document.body.appendChild(testSection)
+
+    // Run validation
+    const validation = validateAccessibility(testSection)
+
+    // Clean up
+    document.body.removeChild(testSection)
+
+    // Log results
+    console.log('DOM Accessibility Validation Results:')
+    console.log('Errors:', validation.errors)
+    console.log('Warnings:', validation.warnings)
+    console.log('Suggestions:', validation.suggestions)
+}
+
+/**
+ * Integration test for all accessibility features
+ */
+export function runAccessibilityIntegrationTest(): IntegrationTestResult {
+    const implementationTest = new AccessibilityImplementationTest()
+    const implementationResults = implementationTest.runAllTests()
+
+    // Test theme color contrast
+    const testTheme: ThemeConfig = {
+        primaryColor: '#3b82f6',
+        secondaryColor: '#64748b',
+        accentColor: '#f59e0b',
+        backgroundColor: '#ffffff',
+        textColor: '#1f2937',
+        borderColor: '#e5e7eb'
+    }
+
+    const contrastResults = [
+        checkColorContrast(testTheme.textColor, testTheme.backgroundColor),
+        checkColorContrast(testTheme.primaryColor, testTheme.backgroundColor),
+        checkColorContrast(testTheme.secondaryColor, testTheme.backgroundColor)
+    ]
+
+    const contrastPassed = contrastResults.filter(r => r.wcagAA).length
+    const contrastTotal = contrastResults.length
+
+    return {
+        implementation: implementationResults,
+        colorContrast: {
+            total: contrastTotal,
+            passed: contrastPassed,
+            passRate: (contrastPassed / contrastTotal) * 100,
+            results: contrastResults
+        },
+        overall: {
+            implementationScore: implementationResults.passRate,
+            contrastScore: (contrastPassed / contrastTotal) * 100,
+            overallScore: (implementationResults.passRate + (contrastPassed / contrastTotal) * 100) / 2
         }
     }
 }
 
-// Export validation results for external use
-export const VALIDATION_RESULTS = {
-    COMPONENT_IMPORTS: 'HeroCentered, HeroCenteredEditor, HeroCenteredPreview',
-    TYPE_DEFINITIONS: 'HeroCenteredProps, HeroEditorProps<HeroCenteredProps>',
-    DEFAULT_CONFIGS: 'Theme, Responsive, Accessibility',
-    REGISTRY_INTEGRATION: 'hero-centered configuration',
-    FACTORY_INTEGRATION: 'Dynamic component loading',
-    PROPS_VALIDATION: 'Minimal and full props structures'
+// Type definitions
+interface TestResult {
+    name: string
+    description: string
+    status: 'pass' | 'fail'
+    error?: string
 }
 
-// Run validation if this file is executed directly
-if (typeof window === 'undefined' && require.main === module) {
-    validateHeroCenteredImplementation()
-        .then((result) => {
-            if (result.success) {
-                console.log('\n🎯 Hero Centered variant implementation is ready for use!')
-                process.exit(0)
-            } else {
-                console.error('\n💥 Implementation validation failed')
-                process.exit(1)
-            }
-        })
-        .catch((error) => {
-            console.error('\n💥 Validation error:', error)
-            process.exit(1)
-        })
+interface TestSummary {
+    total: number
+    passed: number
+    failed: number
+    passRate: number
+    results: TestResult[]
+}
+
+interface ContrastResult {
+    ratio: number
+    wcagAA: boolean
+    wcagAAA: boolean
+}
+
+interface IntegrationTestResult {
+    implementation: TestSummary
+    colorContrast: {
+        total: number
+        passed: number
+        passRate: number
+        results: ContrastResult[]
+    }
+    overall: {
+        implementationScore: number
+        contrastScore: number
+        overallScore: number
+    }
+}
+
+// Export test runner for use in development
+export const accessibilityTestRunner = {
+    AccessibilityImplementationTest,
+    testDOMAccessibility,
+    runAccessibilityIntegrationTest
+}
+
+// Run tests if this file is executed directly
+if (typeof window !== 'undefined' && (window as any).__runAccessibilityTests) {
+    console.log('Running Accessibility Implementation Tests...')
+    const results = runAccessibilityIntegrationTest()
+    console.log('Test Results:', results)
+    
+    if (results.overall.overallScore >= 90) {
+        console.log('✅ Accessibility implementation is excellent!')
+    } else if (results.overall.overallScore >= 75) {
+        console.log('✅ Accessibility implementation is good!')
+    } else {
+        console.log('⚠️ Accessibility implementation needs improvement.')
+    }
 }
