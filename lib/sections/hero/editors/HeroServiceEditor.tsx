@@ -301,7 +301,7 @@ export function HeroServiceEditor(props: HeroEditorProps<HeroServiceProps>) {
     }
 
     // Create a wrapper component that matches the expected interface
-    const PreviewWrapper = ({ props: previewProps }: { props: HeroServiceProps }) => (
+    const PreviewWrapper = (previewProps: HeroServiceProps & { isPreview?: boolean; previewMode?: 'mobile' | 'tablet' | 'desktop' }) => (
         <HeroServicePreview {...previewProps} />
     )
 
@@ -611,6 +611,8 @@ function ServiceItemEditor({
                                             src={service.image.url}
                                             alt={service.image.alt || 'Service image'}
                                             className="w-full h-full object-cover"
+                                            width={service.image.width || 48}
+                                            height={service.image.height || 48}
                                         />
                                     </div>
                                     <Button
@@ -876,6 +878,8 @@ function TrustBadgeItemEditor({ badge, index, onUpdate, onRemove }: TrustBadgeIt
                                     src={badge.image.url}
                                     alt={badge.image.alt || 'Trust badge'}
                                     className="max-w-full max-h-full object-contain"
+                                    width={badge.image.width || 64}
+                                    height={badge.image.height || 48}
                                 />
                             </div>
                         )}

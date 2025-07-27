@@ -297,7 +297,7 @@ export function HeroTestimonialEditor(props: HeroEditorProps<HeroTestimonialProp
     }
 
     // Create a wrapper component that matches the expected interface
-    const PreviewWrapper = ({ props: previewProps }: { props: HeroTestimonialProps }) => (
+    const PreviewWrapper = (previewProps: HeroTestimonialProps & { isPreview?: boolean; previewMode?: 'mobile' | 'tablet' | 'desktop' }) => (
         <HeroTestimonialPreview {...previewProps} />
     )
 
@@ -413,6 +413,8 @@ function TestimonialEditor({
                                 src={testimonial.avatar.url}
                                 alt={testimonial.avatar.alt || `${testimonial.author} avatar`}
                                 className="w-10 h-10 rounded-full object-cover"
+                                width={testimonial.avatar.width || 40}
+                                height={testimonial.avatar.height || 40}
                             />
                         ) : (
                             <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">

@@ -1,419 +1,937 @@
 // Hero Section Migration Utilities
-// Provides utilities for migrating existing hero sections to new variants
 
-import { HeroVariant } from './types'
-import { HERO_MIGRATION_MAP, migrateHeroSection } from '../registry'
+import {
+    HeroProps,
+    HeroVariant,
+    HeroCenteredProps,
+    HeroSplitScreenProps,
+    HeroVideoProps,
+    HeroMinimalProps,
+    HeroFeatureProps,
+    HeroTestimonialProps,
+    HeroProductProps,
+    HeroServiceProps,
+    HeroCTAProps,
+    HeroGalleryProps,
+    ButtonConfig,
+    TextContent,
+    BackgroundConfig,
+    MediaConfig,
+    FeatureItem,
+    TestimonialItem,
+    ProductItem,
+    ServiceItem,
+    GalleryItem
+} from './types'
+import { HERO_SECTION_REGISTRY } from './registry'
 
-export interface MigrationResult {
-    success: boolean
-    newSectionId: string
-    newProps: any
-    warnings?: string[]
-    errors?: string[]
-}
-
-export interface MigrationOptions {
-    preserveCustomStyles?: boolean
-    fallbackVariant?: HeroVariant
-    validateProps?: boolean
+/**
+ * Migration strategy interface
+ */
+export interface MigrationStrategy {
+    name: string
+    description: string
+    preserveContent: boolean
+    preserveMedia: boolean
+    preserveLayout: boolean
+    allowDataLoss: boolean
 }
 
 /**
- * Migrate a legacy hero section to a new hero variant
+ * Available migration strategies
  */
-export function migrateLegacyHeroSection(
-    oldProps: any,
-    targetVariant?: HeroVariant,
-    options: MigrationOptions = {}
-): MigrationResult {
-    const {
-        preserveCustomStyles = true,
-        fallbackVariant = HeroVariant.CENTERED,
-        validateProps = true
-    } = options
+export const MIGRATION_STRATEGIES: Record<string, MigrationStrategy> = {
+    conservative: {
+        name: 'Conservative',
+        description: 'Preserve as much data as possible, use defaults for incompatible properties',
+        preserveContent: true,
+        preserveMedia: true,
+        preserveLayout: false,
+        allowDataLoss: false
+    },
+    balanced: {
+        name: 'Balanced',
+        description: 'Balance between data preservation and target variant optimization',
+        preserveContent: true,
+        preserveMedia: true,
+        preserveLayout: true,
+        allowDataLoss: true
+    },
+    optimized: {
+        name: 'Optimized',
+        description: 'Optimize for target variant, may lose some source data',
+        preserveContent: true,
+        preserveMedia: false,
+        preserveLayout: true,
+        allowDataLoss: true
+    }
+}
+
+/**
+ * Property migration result
+ */
+export interface MigrationResult<T extends HeroProps> {
+    success: boolean
+    migratedProps: T
+    warnings: string[]
+    errors: string[]
+    lostData: Array<{
+        property: string
+        value: any
+        reason: string
+    }>
+    addedDefaults: Array<{
+        property: string
+        value: any
+        reason: string
+    }>
+}
+
+/**
+ * Main migration function
+ */
+export function migrateHeroSection<T extends HeroProps>(
+    sourceProps: HeroProps,
+    targetVariant: HeroVariant,
+    strategy: MigrationStrategy = MIGRATION_STRATEGIES.balanced
+): MigrationResult<T> {
+    const result: MigrationResult<T> = {
+        success: false,
+        migratedProps: {} as T,
+        warnings: [],
+        errors: [],
+        lostData: [],
+        addedDefaults: []
+    }
 
     try {
-        // First try the standard migration
-        const standardMigration = migrateHeroSection('hero-section', oldProps)
-        
-        if (standardMigration) {
-            let result = standardMigration
-            
-            // If a specific target variant is requested, try to adapt to it
-            if (targetVariant && targetVariant !== HeroVariant.CENTERED) {
-                result = adaptToVariant(result.props, targetVariant, oldProps)
-            }
-            
-            // Validate the migrated props if requested
-            if (validateProps) {
-                const validation = validateMigratedProps(result.props, result.sectionId)
-                if (!validation.isValid) {
-                    return {
-                        success: false,
-                        newSectionId: result.sectionId,
-                        newProps: result.props,
-                        errors: validation.errors
-                    }
-                }
-            }
-            
-            return {
-                success: true,
-                newSectionId: result.sectionId,
-                newProps: result.props,
-                warnings: generateMigrationWarnings(oldProps, result.props)
-            }
+        // Get target variant configuration
+        const targetConfig = Object.values(HERO_SECTION_REGISTRY).find(
+            config => config.variant === targetVariant
+        )
+
+        if (!targetConfig) {
+            result.errors.push(`Unknown target variant: ${targetVariant}`)
+            return result
         }
-        
-        // Fallback to manual migration
-        return manualMigration(oldProps, targetVariant || fallbackVariant, options)
-        
+
+        // Start with default props for target variant
+        const migratedProps = JSON.parse(JSON.stringify(targetConfig.defaultProps)) as T
+
+        // Preserve base properties
+        migratedProps.id = sourceProps.id
+        migratedProps.variant = targetVariant
+        migratedProps.theme = sourceProps.theme
+        migratedProps.responsive = sourceProps.responsive
+        migratedProps.animation = sourceProps.animation
+        migratedProps.accessibility = sourceProps.accessibility
+        migratedProps.className = sourceProps.className
+        migratedProps.style = sourceProps.style
+
+        // Apply variant-specific migration
+        const migrationFunction = getMigrationFunction(sourceProps.variant, targetVariant)
+        if (migrationFunction) {
+            const migrationResult = migrationFunction(sourceProps, migratedProps, strategy)
+            result.warnings.push(...migrationResult.warnings)
+            result.lostData.push(...migrationResult.lostData)
+            result.addedDefaults.push(...migrationResult.addedDefaults)
+        } else {
+            result.warnings.push(`No specific migration available from ${sourceProps.variant} to ${targetVariant}`)
+        }
+
+        result.migratedProps = migratedProps
+        result.success = true
+
     } catch (error) {
-        return {
-            success: false,
-            newSectionId: `hero-${targetVariant || fallbackVariant}`,
-            newProps: {},
-            errors: [`Migration failed: ${error instanceof Error ? error.message : 'Unknown error'}`]
+        result.errors.push(`Migration failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+
+    return result
+}
+
+/**
+ * Get migration function for specific variant combination
+ */
+function getMigrationFunction(
+    sourceVariant: HeroVariant,
+    targetVariant: HeroVariant
+): ((source: HeroProps, target: HeroProps, strategy: MigrationStrategy) => {
+    warnings: string[]
+    lostData: Array<{ property: string; value: any; reason: string }>
+    addedDefaults: Array<{ property: string; value: any; reason: string }>
+}) | null {
+    const migrationKey = `${sourceVariant}_to_${targetVariant}`
+    
+    const migrations: Record<string, any> = {
+        [`${HeroVariant.CENTERED}_to_${HeroVariant.SPLIT_SCREEN}`]: migrateCenteredToSplitScreen,
+        [`${HeroVariant.CENTERED}_to_${HeroVariant.MINIMAL}`]: migrateCenteredToMinimal,
+        [`${HeroVariant.CENTERED}_to_${HeroVariant.VIDEO}`]: migrateCenteredToVideo,
+        [`${HeroVariant.CENTERED}_to_${HeroVariant.FEATURE}`]: migrateCenteredToFeature,
+        [`${HeroVariant.CENTERED}_to_${HeroVariant.CTA}`]: migrateCenteredToCTA,
+        
+        [`${HeroVariant.SPLIT_SCREEN}_to_${HeroVariant.CENTERED}`]: migrateSplitScreenToCentered,
+        [`${HeroVariant.SPLIT_SCREEN}_to_${HeroVariant.MINIMAL}`]: migrateSplitScreenToMinimal,
+        [`${HeroVariant.SPLIT_SCREEN}_to_${HeroVariant.FEATURE}`]: migrateSplitScreenToFeature,
+        
+        [`${HeroVariant.VIDEO}_to_${HeroVariant.CENTERED}`]: migrateVideoToCentered,
+        [`${HeroVariant.VIDEO}_to_${HeroVariant.SPLIT_SCREEN}`]: migrateVideoToSplitScreen,
+        
+        [`${HeroVariant.MINIMAL}_to_${HeroVariant.CENTERED}`]: migrateMinimalToCentered,
+        [`${HeroVariant.MINIMAL}_to_${HeroVariant.SPLIT_SCREEN}`]: migrateMinimalToSplitScreen,
+        
+        [`${HeroVariant.FEATURE}_to_${HeroVariant.CENTERED}`]: migrateFeatureToCentered,
+        [`${HeroVariant.FEATURE}_to_${HeroVariant.SPLIT_SCREEN}`]: migrateFeatureToSplitScreen,
+        
+        [`${HeroVariant.TESTIMONIAL}_to_${HeroVariant.CENTERED}`]: migrateTestimonialToCentered,
+        [`${HeroVariant.PRODUCT}_to_${HeroVariant.CENTERED}`]: migrateProductToCentered,
+        [`${HeroVariant.SERVICE}_to_${HeroVariant.CENTERED}`]: migrateServiceToCentered,
+        [`${HeroVariant.CTA}_to_${HeroVariant.CENTERED}`]: migrateCTAToCentered,
+        [`${HeroVariant.GALLERY}_to_${HeroVariant.CENTERED}`]: migrateGalleryToCentered
+    }
+
+    return migrations[migrationKey] || null
+}
+
+/**
+ * Migration: Centered to Split Screen
+ */
+function migrateCenteredToSplitScreen(
+    source: HeroCenteredProps,
+    target: HeroSplitScreenProps,
+    strategy: MigrationStrategy
+) {
+    const warnings: string[] = []
+    const lostData: Array<{ property: string; value: any; reason: string }> = []
+    const addedDefaults: Array<{ property: string; value: any; reason: string }> = []
+
+    // Migrate content
+    target.content = {
+        title: source.title,
+        subtitle: source.subtitle,
+        description: source.description,
+        buttons: []
+    }
+
+    // Migrate buttons
+    if (source.primaryButton) {
+        target.content.buttons.push(source.primaryButton)
+    }
+    if (source.secondaryButton) {
+        target.content.buttons.push(source.secondaryButton)
+    }
+
+    // Migrate background
+    target.background = source.background
+
+    // Handle text alignment loss
+    if (source.textAlign !== 'left') {
+        lostData.push({
+            property: 'textAlign',
+            value: source.textAlign,
+            reason: 'Split screen variant uses fixed content alignment'
+        })
+    }
+
+    // Add default media if strategy preserves media
+    if (!strategy.preserveMedia) {
+        addedDefaults.push({
+            property: 'media',
+            value: target.media,
+            reason: 'Default media added for split screen layout'
+        })
+    }
+
+    return { warnings, lostData, addedDefaults }
+}
+
+/**
+ * Migration: Centered to Minimal
+ */
+function migrateCenteredToMinimal(
+    source: HeroCenteredProps,
+    target: HeroMinimalProps,
+    strategy: MigrationStrategy
+) {
+    const warnings: string[] = []
+    const lostData: Array<{ property: string; value: any; reason: string }> = []
+    const addedDefaults: Array<{ property: string; value: any; reason: string }> = []
+
+    // Migrate basic content
+    target.title = source.title
+    target.subtitle = source.subtitle
+    target.background = source.background
+
+    // Migrate primary button only
+    if (source.primaryButton) {
+        target.button = source.primaryButton
+    }
+
+    // Handle lost data
+    if (source.description) {
+        lostData.push({
+            property: 'description',
+            value: source.description,
+            reason: 'Minimal variant does not support description'
+        })
+    }
+
+    if (source.secondaryButton) {
+        lostData.push({
+            property: 'secondaryButton',
+            value: source.secondaryButton,
+            reason: 'Minimal variant supports only one button'
+        })
+    }
+
+    if (source.textAlign !== 'center') {
+        lostData.push({
+            property: 'textAlign',
+            value: source.textAlign,
+            reason: 'Minimal variant uses centered alignment'
+        })
+    }
+
+    return { warnings, lostData, addedDefaults }
+}
+
+/**
+ * Migration: Centered to Video
+ */
+function migrateCenteredToVideo(
+    source: HeroCenteredProps,
+    target: HeroVideoProps,
+    strategy: MigrationStrategy
+) {
+    const warnings: string[] = []
+    const lostData: Array<{ property: string; value: any; reason: string }> = []
+    const addedDefaults: Array<{ property: string; value: any; reason: string }> = []
+
+    // Migrate content to video overlay
+    target.content = {
+        title: source.title,
+        subtitle: source.subtitle,
+        description: source.description,
+        buttons: [],
+        position: 'center'
+    }
+
+    // Migrate buttons
+    if (source.primaryButton) {
+        target.content.buttons.push(source.primaryButton)
+    }
+    if (source.secondaryButton) {
+        target.content.buttons.push(source.secondaryButton)
+    }
+
+    // Handle background migration
+    if (source.background.type === 'video' && source.background.video) {
+        target.video = source.background.video
+    } else {
+        addedDefaults.push({
+            property: 'video',
+            value: target.video,
+            reason: 'Default video added as source had no video background'
+        })
+        
+        if (source.background.type !== 'none') {
+            lostData.push({
+                property: 'background',
+                value: source.background,
+                reason: 'Non-video background replaced with video'
+            })
         }
     }
+
+    return { warnings, lostData, addedDefaults }
 }
 
 /**
- * Adapt migrated props to a specific hero variant
+ * Migration: Centered to Feature
  */
-function adaptToVariant(
-    centeredProps: any,
-    targetVariant: HeroVariant,
-    originalProps: any
-): { sectionId: string; props: any } {
-    const sectionId = `hero-${targetVariant}`
-    
-    switch (targetVariant) {
-        case HeroVariant.SPLIT_SCREEN:
-            return {
-                sectionId,
-                props: {
-                    content: {
-                        title: centeredProps.title,
-                        subtitle: centeredProps.subtitle,
-                        description: centeredProps.description,
-                        buttons: centeredProps.primaryButton ? [centeredProps.primaryButton] : []
-                    },
-                    media: centeredProps.background?.image || {
-                        id: 'hero-media',
-                        url: '/assets/hero/hero-image.jpg',
-                        type: 'image',
-                        alt: 'Hero image',
-                        objectFit: 'cover',
-                        loading: 'eager'
-                    },
-                    layout: 'left',
-                    contentAlignment: 'center',
-                    mediaAlignment: 'center',
-                    background: {
-                        type: 'color',
-                        color: '#ffffff'
-                    }
-                }
-            }
-            
-        case HeroVariant.MINIMAL:
-            return {
-                sectionId,
-                props: {
-                    title: centeredProps.title,
-                    subtitle: centeredProps.subtitle,
-                    button: centeredProps.primaryButton,
-                    background: {
-                        type: 'color',
-                        color: '#ffffff'
-                    },
-                    spacing: 'normal'
-                }
-            }
-            
-        case HeroVariant.VIDEO:
-            return {
-                sectionId,
-                props: {
-                    video: {
-                        id: 'hero-video',
-                        url: '/assets/hero/hero-video.mp4',
-                        type: 'video',
-                        autoplay: true,
-                        loop: true,
-                        muted: true,
-                        controls: false,
-                        poster: centeredProps.background?.image?.url || '/assets/hero/video-poster.jpg',
-                        objectFit: 'cover',
-                        loading: 'eager'
-                    },
-                    overlay: {
-                        enabled: true,
-                        color: '#000000',
-                        opacity: 0.4
-                    },
-                    content: {
-                        title: centeredProps.title,
-                        subtitle: centeredProps.subtitle,
-                        description: centeredProps.description,
-                        buttons: centeredProps.primaryButton ? [centeredProps.primaryButton] : [],
-                        position: 'center'
-                    }
-                }
-            }
-            
-        case HeroVariant.CTA:
-            return {
-                sectionId,
-                props: {
-                    title: centeredProps.title,
-                    subtitle: centeredProps.subtitle,
-                    description: centeredProps.description,
-                    primaryButton: centeredProps.primaryButton || {
-                        text: 'Get Started',
-                        url: '#',
-                        style: 'primary',
-                        size: 'lg',
-                        iconPosition: 'right',
-                        target: '_self'
-                    },
-                    secondaryButton: centeredProps.secondaryButton,
-                    background: centeredProps.background,
-                    layout: 'center',
-                    showBenefits: false
-                }
-            }
-            
-        default:
-            return { sectionId: `hero-${targetVariant}`, props: centeredProps }
-    }
-}
-
-/**
- * Manual migration when standard migration fails
- */
-function manualMigration(
-    oldProps: any,
-    targetVariant: HeroVariant,
-    options: MigrationOptions
-): MigrationResult {
-    const sectionId = `hero-${targetVariant}`
-    
-    // Create basic props structure based on target variant
-    let newProps: any = {}
-    
-    switch (targetVariant) {
-        case HeroVariant.CENTERED:
-            newProps = {
-                title: {
-                    text: oldProps.title || 'Welcome to Your Website',
-                    tag: 'h1'
-                },
-                subtitle: oldProps.subtitle ? {
-                    text: oldProps.subtitle,
-                    tag: 'p'
-                } : undefined,
-                primaryButton: oldProps.buttonText ? {
-                    text: oldProps.buttonText,
-                    url: oldProps.buttonLink || '#',
-                    style: 'primary',
-                    size: 'lg',
-                    iconPosition: 'right',
-                    target: '_self'
-                } : undefined,
-                background: {
-                    type: 'gradient',
-                    gradient: {
-                        type: 'linear',
-                        direction: '45deg',
-                        colors: [
-                            { color: '#3b82f6', stop: 0 },
-                            { color: '#8b5cf6', stop: 100 }
-                        ]
-                    }
-                },
-                textAlign: oldProps.textAlign || 'center'
-            }
-            break
-            
-        case HeroVariant.MINIMAL:
-            newProps = {
-                title: {
-                    text: oldProps.title || 'Simple. Elegant. Effective.',
-                    tag: 'h1'
-                },
-                subtitle: oldProps.subtitle ? {
-                    text: oldProps.subtitle,
-                    tag: 'h2'
-                } : undefined,
-                button: oldProps.buttonText ? {
-                    text: oldProps.buttonText,
-                    url: oldProps.buttonLink || '#',
-                    style: 'link',
-                    size: 'lg',
-                    iconPosition: 'right',
-                    target: '_self'
-                } : undefined,
-                background: {
-                    type: 'color',
-                    color: '#ffffff'
-                },
-                spacing: 'normal'
-            }
-            break
-            
-        default:
-            // Fallback to centered variant
-            return manualMigration(oldProps, HeroVariant.CENTERED, options)
-    }
-    
-    return {
-        success: true,
-        newSectionId: sectionId,
-        newProps,
-        warnings: ['Manual migration performed - please review the migrated content']
-    }
-}
-
-/**
- * Validate migrated props against the target variant schema
- */
-function validateMigratedProps(props: any, sectionId: string): { isValid: boolean; errors: string[] } {
-    const errors: string[] = []
-    
-    // Basic validation - check for required fields based on variant
-    const variant = sectionId.replace('hero-', '') as HeroVariant
-    
-    switch (variant) {
-        case HeroVariant.CENTERED:
-            if (!props.title?.text) {
-                errors.push('Title is required for centered hero variant')
-            }
-            break
-            
-        case HeroVariant.SPLIT_SCREEN:
-            if (!props.content?.title?.text) {
-                errors.push('Content title is required for split-screen hero variant')
-            }
-            if (!props.media?.url) {
-                errors.push('Media URL is required for split-screen hero variant')
-            }
-            break
-            
-        case HeroVariant.VIDEO:
-            if (!props.video?.url) {
-                errors.push('Video URL is required for video hero variant')
-            }
-            if (!props.content?.title?.text) {
-                errors.push('Content title is required for video hero variant')
-            }
-            break
-            
-        case HeroVariant.MINIMAL:
-            if (!props.title?.text) {
-                errors.push('Title is required for minimal hero variant')
-            }
-            break
-    }
-    
-    return {
-        isValid: errors.length === 0,
-        errors
-    }
-}
-
-/**
- * Generate warnings about potential issues in migration
- */
-function generateMigrationWarnings(oldProps: any, newProps: any): string[] {
+function migrateCenteredToFeature(
+    source: HeroCenteredProps,
+    target: HeroFeatureProps,
+    strategy: MigrationStrategy
+) {
     const warnings: string[] = []
-    
-    // Check for lost properties
-    if (oldProps.backgroundImage && !newProps.background?.image) {
-        warnings.push('Background image may need to be reconfigured')
+    const lostData: Array<{ property: string; value: any; reason: string }> = []
+    const addedDefaults: Array<{ property: string; value: any; reason: string }> = []
+
+    // Migrate basic content
+    target.title = source.title
+    target.subtitle = source.subtitle
+    target.description = source.description
+    target.background = source.background
+
+    // Migrate primary button
+    if (source.primaryButton) {
+        target.primaryButton = source.primaryButton
     }
-    
-    if (oldProps.customCSS) {
-        warnings.push('Custom CSS styles were not migrated - please review and reapply if needed')
+
+    // Handle secondary button loss
+    if (source.secondaryButton) {
+        lostData.push({
+            property: 'secondaryButton',
+            value: source.secondaryButton,
+            reason: 'Feature variant supports only primary button'
+        })
     }
-    
-    if (oldProps.animations) {
-        warnings.push('Animation settings were not migrated - please reconfigure if needed')
-    }
-    
-    return warnings
+
+    // Add default features
+    addedDefaults.push({
+        property: 'features',
+        value: target.features,
+        reason: 'Default features added for feature variant'
+    })
+
+    return { warnings, lostData, addedDefaults }
 }
 
 /**
- * Get recommended hero variants for migration based on old props
+ * Migration: Centered to CTA
  */
-export function getRecommendedVariants(oldProps: any): Array<{ variant: HeroVariant; reason: string; confidence: number }> {
-    const recommendations: Array<{ variant: HeroVariant; reason: string; confidence: number }> = []
-    
-    // Analyze old props to suggest best variants
-    if (oldProps.backgroundImage) {
-        recommendations.push({
-            variant: HeroVariant.SPLIT_SCREEN,
-            reason: 'Has background image - works well as media in split-screen layout',
-            confidence: 0.8
-        })
+function migrateCenteredToCTA(
+    source: HeroCenteredProps,
+    target: HeroCTAProps,
+    strategy: MigrationStrategy
+) {
+    const warnings: string[] = []
+    const lostData: Array<{ property: string; value: any; reason: string }> = []
+    const addedDefaults: Array<{ property: string; value: any; reason: string }> = []
+
+    // Migrate content
+    target.title = source.title
+    target.subtitle = source.subtitle
+    target.description = source.description
+    target.background = source.background
+
+    // Migrate buttons
+    if (source.primaryButton) {
+        target.primaryButton = source.primaryButton
     }
-    
-    if (oldProps.buttonText && !oldProps.subtitle) {
-        recommendations.push({
-            variant: HeroVariant.MINIMAL,
-            reason: 'Simple structure with just title and button - perfect for minimal design',
-            confidence: 0.7
-        })
+    if (source.secondaryButton) {
+        target.secondaryButton = source.secondaryButton
     }
-    
-    if (oldProps.title && oldProps.subtitle && oldProps.buttonText) {
-        recommendations.push({
-            variant: HeroVariant.CENTERED,
-            reason: 'Complete content structure - ideal for traditional centered layout',
-            confidence: 0.9
-        })
-    }
-    
-    if (oldProps.buttonText && (oldProps.title?.toLowerCase().includes('buy') || oldProps.title?.toLowerCase().includes('get'))) {
-        recommendations.push({
-            variant: HeroVariant.CTA,
-            reason: 'Action-oriented content - optimized for conversions',
-            confidence: 0.6
-        })
-    }
-    
-    // Sort by confidence
-    return recommendations.sort((a, b) => b.confidence - a.confidence)
+
+    return { warnings, lostData, addedDefaults }
 }
 
 /**
- * Batch migrate multiple hero sections
+ * Migration: Split Screen to Centered
  */
-export function batchMigrateHeroSections(
-    sections: Array<{ id: string; props: any }>,
-    options: MigrationOptions = {}
-): Array<{ id: string; migration: MigrationResult }> {
-    return sections.map(section => ({
-        id: section.id,
-        migration: migrateLegacyHeroSection(section.props, undefined, options)
-    }))
+function migrateSplitScreenToCentered(
+    source: HeroSplitScreenProps,
+    target: HeroCenteredProps,
+    strategy: MigrationStrategy
+) {
+    const warnings: string[] = []
+    const lostData: Array<{ property: string; value: any; reason: string }> = []
+    const addedDefaults: Array<{ property: string; value: any; reason: string }> = []
+
+    // Migrate content
+    target.title = source.content.title
+    target.subtitle = source.content.subtitle
+    target.description = source.content.description
+    target.background = source.background
+
+    // Migrate buttons
+    if (source.content.buttons.length > 0) {
+        target.primaryButton = source.content.buttons[0]
+    }
+    if (source.content.buttons.length > 1) {
+        target.secondaryButton = source.content.buttons[1]
+    }
+
+    // Handle lost data
+    if (source.media) {
+        lostData.push({
+            property: 'media',
+            value: source.media,
+            reason: 'Centered variant does not support separate media'
+        })
+    }
+
+    if (source.layout !== 'left') {
+        lostData.push({
+            property: 'layout',
+            value: source.layout,
+            reason: 'Centered variant does not have layout options'
+        })
+    }
+
+    // Handle extra buttons
+    if (source.content.buttons.length > 2) {
+        lostData.push({
+            property: 'extraButtons',
+            value: source.content.buttons.slice(2),
+            reason: 'Centered variant supports maximum 2 buttons'
+        })
+    }
+
+    return { warnings, lostData, addedDefaults }
 }
 
 /**
- * Preview migration without applying changes
+ * Migration: Split Screen to Minimal
  */
-export function previewMigration(
-    oldProps: any,
-    targetVariant?: HeroVariant
-): { preview: any; warnings: string[]; recommendations: Array<{ variant: HeroVariant; reason: string; confidence: number }> } {
-    const migration = migrateLegacyHeroSection(oldProps, targetVariant, { validateProps: false })
-    const recommendations = getRecommendedVariants(oldProps)
+function migrateSplitScreenToMinimal(
+    source: HeroSplitScreenProps,
+    target: HeroMinimalProps,
+    strategy: MigrationStrategy
+) {
+    const warnings: string[] = []
+    const lostData: Array<{ property: string; value: any; reason: string }> = []
+    const addedDefaults: Array<{ property: string; value: any; reason: string }> = []
+
+    // Migrate basic content
+    target.title = source.content.title
+    target.subtitle = source.content.subtitle
+    target.background = source.background
+
+    // Migrate first button only
+    if (source.content.buttons.length > 0) {
+        target.button = source.content.buttons[0]
+    }
+
+    // Handle lost data
+    if (source.content.description) {
+        lostData.push({
+            property: 'description',
+            value: source.content.description,
+            reason: 'Minimal variant does not support description'
+        })
+    }
+
+    if (source.media) {
+        lostData.push({
+            property: 'media',
+            value: source.media,
+            reason: 'Minimal variant does not support media'
+        })
+    }
+
+    if (source.content.buttons.length > 1) {
+        lostData.push({
+            property: 'extraButtons',
+            value: source.content.buttons.slice(1),
+            reason: 'Minimal variant supports only one button'
+        })
+    }
+
+    return { warnings, lostData, addedDefaults }
+}
+
+/**
+ * Migration: Video to Centered
+ */
+function migrateVideoToCentered(
+    source: HeroVideoProps,
+    target: HeroCenteredProps,
+    strategy: MigrationStrategy
+) {
+    const warnings: string[] = []
+    const lostData: Array<{ property: string; value: any; reason: string }> = []
+    const addedDefaults: Array<{ property: string; value: any; reason: string }> = []
+
+    // Migrate content
+    target.title = source.content.title
+    target.subtitle = source.content.subtitle
+    target.description = source.content.description
+
+    // Migrate buttons
+    if (source.content.buttons.length > 0) {
+        target.primaryButton = source.content.buttons[0]
+    }
+    if (source.content.buttons.length > 1) {
+        target.secondaryButton = source.content.buttons[1]
+    }
+
+    // Handle video to background conversion
+    if (strategy.preserveMedia && source.video) {
+        target.background = {
+            type: 'video',
+            video: source.video,
+            overlay: source.overlay
+        }
+    } else {
+        lostData.push({
+            property: 'video',
+            value: source.video,
+            reason: 'Video background not preserved in migration'
+        })
+        
+        addedDefaults.push({
+            property: 'background',
+            value: target.background,
+            reason: 'Default background added to replace video'
+        })
+    }
+
+    if (source.overlay) {
+        lostData.push({
+            property: 'overlay',
+            value: source.overlay,
+            reason: 'Overlay settings may not transfer perfectly'
+        })
+    }
+
+    return { warnings, lostData, addedDefaults }
+}
+
+/**
+ * Migration: Video to Split Screen
+ */
+function migrateVideoToSplitScreen(
+    source: HeroVideoProps,
+    target: HeroSplitScreenProps,
+    strategy: MigrationStrategy
+) {
+    const warnings: string[] = []
+    const lostData: Array<{ property: string; value: any; reason: string }> = []
+    const addedDefaults: Array<{ property: string; value: any; reason: string }> = []
+
+    // Migrate content
+    target.content = {
+        title: source.content.title,
+        subtitle: source.content.subtitle,
+        description: source.content.description,
+        buttons: source.content.buttons
+    }
+
+    // Handle video to media conversion
+    if (strategy.preserveMedia && source.video) {
+        target.media = {
+            id: source.video.id,
+            url: source.video.url,
+            type: 'video',
+            alt: source.video.alt || 'Video content',
+            objectFit: source.video.objectFit || 'cover',
+            loading: source.video.loading || 'eager'
+        }
+    } else {
+        lostData.push({
+            property: 'video',
+            value: source.video,
+            reason: 'Video not preserved as media in split screen'
+        })
+    }
+
+    return { warnings, lostData, addedDefaults }
+}
+
+/**
+ * Migration: Minimal to Centered
+ */
+function migrateMinimalToCentered(
+    source: HeroMinimalProps,
+    target: HeroCenteredProps,
+    strategy: MigrationStrategy
+) {
+    const warnings: string[] = []
+    const lostData: Array<{ property: string; value: any; reason: string }> = []
+    const addedDefaults: Array<{ property: string; value: any; reason: string }> = []
+
+    // Migrate content
+    target.title = source.title
+    target.subtitle = source.subtitle
+    target.background = source.background
+
+    // Migrate button
+    if (source.button) {
+        target.primaryButton = source.button
+    }
+
+    // Handle spacing loss
+    if (source.spacing !== 'normal') {
+        lostData.push({
+            property: 'spacing',
+            value: source.spacing,
+            reason: 'Centered variant does not have spacing options'
+        })
+    }
+
+    return { warnings, lostData, addedDefaults }
+}
+
+/**
+ * Migration: Minimal to Split Screen
+ */
+function migrateMinimalToSplitScreen(
+    source: HeroMinimalProps,
+    target: HeroSplitScreenProps,
+    strategy: MigrationStrategy
+) {
+    const warnings: string[] = []
+    const lostData: Array<{ property: string; value: any; reason: string }> = []
+    const addedDefaults: Array<{ property: string; value: any; reason: string }> = []
+
+    // Migrate content
+    target.content = {
+        title: source.title,
+        subtitle: source.subtitle,
+        description: undefined,
+        buttons: source.button ? [source.button] : []
+    }
+
+    target.background = source.background
+
+    // Add default media
+    addedDefaults.push({
+        property: 'media',
+        value: target.media,
+        reason: 'Default media added for split screen layout'
+    })
+
+    return { warnings, lostData, addedDefaults }
+}
+
+/**
+ * Generic migrations for complex variants to simple ones
+ */
+function migrateFeatureToCentered(source: HeroFeatureProps, target: HeroCenteredProps, strategy: MigrationStrategy) {
+    return migrateComplexToCentered(source, target, 'features')
+}
+
+function migrateTestimonialToCentered(source: HeroTestimonialProps, target: HeroCenteredProps, strategy: MigrationStrategy) {
+    return migrateComplexToCentered(source, target, 'testimonials')
+}
+
+function migrateProductToCentered(source: HeroProductProps, target: HeroCenteredProps, strategy: MigrationStrategy) {
+    return migrateComplexToCentered(source, target, 'product')
+}
+
+function migrateServiceToCentered(source: HeroServiceProps, target: HeroCenteredProps, strategy: MigrationStrategy) {
+    return migrateComplexToCentered(source, target, 'services')
+}
+
+function migrateCTAToCentered(source: HeroCTAProps, target: HeroCenteredProps, strategy: MigrationStrategy) {
+    return migrateComplexToCentered(source, target, 'benefits')
+}
+
+function migrateGalleryToCentered(source: HeroGalleryProps, target: HeroCenteredProps, strategy: MigrationStrategy) {
+    return migrateComplexToCentered(source, target, 'gallery')
+}
+
+/**
+ * Generic migration from complex variants to centered
+ */
+function migrateComplexToCentered(
+    source: any,
+    target: HeroCenteredProps,
+    complexProperty: string
+) {
+    const warnings: string[] = []
+    const lostData: Array<{ property: string; value: any; reason: string }> = []
+    const addedDefaults: Array<{ property: string; value: any; reason: string }> = []
+
+    // Migrate basic content
+    target.title = source.title
+    target.subtitle = source.subtitle
+    target.description = source.description
+    target.background = source.background
+
+    // Migrate buttons
+    if (source.primaryButton) {
+        target.primaryButton = source.primaryButton
+    }
+    if (source.secondaryButton) {
+        target.secondaryButton = source.secondaryButton
+    }
+
+    // Handle complex property loss
+    if (source[complexProperty]) {
+        lostData.push({
+            property: complexProperty,
+            value: source[complexProperty],
+            reason: `Centered variant does not support ${complexProperty}`
+        })
+    }
+
+    return { warnings, lostData, addedDefaults }
+}
+
+/**
+ * Migration: Split Screen to Feature
+ */
+function migrateSplitScreenToFeature(
+    source: HeroSplitScreenProps,
+    target: HeroFeatureProps,
+    strategy: MigrationStrategy
+) {
+    const warnings: string[] = []
+    const lostData: Array<{ property: string; value: any; reason: string }> = []
+    const addedDefaults: Array<{ property: string; value: any; reason: string }> = []
+
+    // Migrate content
+    target.title = source.content.title
+    target.subtitle = source.content.subtitle
+    target.description = source.content.description
+    target.background = source.background
+
+    // Migrate first button as primary button
+    if (source.content.buttons.length > 0) {
+        target.primaryButton = source.content.buttons[0]
+    }
+
+    // Handle lost data
+    if (source.media) {
+        lostData.push({
+            property: 'media',
+            value: source.media,
+            reason: 'Feature variant does not support separate media'
+        })
+    }
+
+    if (source.content.buttons.length > 1) {
+        lostData.push({
+            property: 'extraButtons',
+            value: source.content.buttons.slice(1),
+            reason: 'Feature variant supports only one primary button'
+        })
+    }
+
+    // Add default features
+    addedDefaults.push({
+        property: 'features',
+        value: target.features,
+        reason: 'Default features added for feature variant'
+    })
+
+    return { warnings, lostData, addedDefaults }
+}
+
+/**
+ * Generic migration from simple variants to complex ones
+ */
+function migrateFeatureToSplitScreen(source: HeroFeatureProps, target: HeroSplitScreenProps, strategy: MigrationStrategy) {
+    return migrateComplexToSplitScreen(source, target, 'features')
+}
+
+function migrateComplexToSplitScreen(
+    source: any,
+    target: HeroSplitScreenProps,
+    complexProperty: string
+) {
+    const warnings: string[] = []
+    const lostData: Array<{ property: string; value: any; reason: string }> = []
+    const addedDefaults: Array<{ property: string; value: any; reason: string }> = []
+
+    // Migrate content
+    target.content = {
+        title: source.title,
+        subtitle: source.subtitle,
+        description: source.description,
+        buttons: source.primaryButton ? [source.primaryButton] : []
+    }
+
+    target.background = source.background
+
+    // Handle complex property loss
+    if (source[complexProperty]) {
+        lostData.push({
+            property: complexProperty,
+            value: source[complexProperty],
+            reason: `Split screen variant does not support ${complexProperty}`
+        })
+    }
+
+    // Add default media
+    addedDefaults.push({
+        property: 'media',
+        value: target.media,
+        reason: 'Default media added for split screen layout'
+    })
+
+    return { warnings, lostData, addedDefaults }
+}
+
+/**
+ * Validate migration compatibility
+ */
+export function validateMigrationCompatibility(
+    sourceVariant: HeroVariant,
+    targetVariant: HeroVariant
+): {
+    isSupported: boolean
+    compatibility: 'high' | 'medium' | 'low'
+    warnings: string[]
+    dataLossRisk: 'none' | 'low' | 'medium' | 'high'
+    recommendations: string[]
+} {
+    // Define compatibility matrix
+    const compatibilityMatrix: Record<string, {
+        compatibility: 'high' | 'medium' | 'low'
+        dataLossRisk: 'none' | 'low' | 'medium' | 'high'
+    }> = {
+        [`${HeroVariant.CENTERED}_${HeroVariant.SPLIT_SCREEN}`]: { compatibility: 'high', dataLossRisk: 'low' },
+        [`${HeroVariant.CENTERED}_${HeroVariant.MINIMAL}`]: { compatibility: 'medium', dataLossRisk: 'medium' },
+        [`${HeroVariant.CENTERED}_${HeroVariant.VIDEO}`]: { compatibility: 'medium', dataLossRisk: 'medium' },
+        [`${HeroVariant.CENTERED}_${HeroVariant.CTA}`]: { compatibility: 'high', dataLossRisk: 'none' },
+        
+        [`${HeroVariant.SPLIT_SCREEN}_${HeroVariant.CENTERED}`]: { compatibility: 'high', dataLossRisk: 'low' },
+        [`${HeroVariant.SPLIT_SCREEN}_${HeroVariant.MINIMAL}`]: { compatibility: 'medium', dataLossRisk: 'high' },
+        
+        [`${HeroVariant.VIDEO}_${HeroVariant.CENTERED}`]: { compatibility: 'medium', dataLossRisk: 'medium' },
+        [`${HeroVariant.VIDEO}_${HeroVariant.SPLIT_SCREEN}`]: { compatibility: 'medium', dataLossRisk: 'low' },
+        
+        [`${HeroVariant.MINIMAL}_${HeroVariant.CENTERED}`]: { compatibility: 'high', dataLossRisk: 'none' },
+        [`${HeroVariant.MINIMAL}_${HeroVariant.SPLIT_SCREEN}`]: { compatibility: 'medium', dataLossRisk: 'low' }
+    }
+
+    const key = `${sourceVariant}_${targetVariant}`
+    const compatibility = compatibilityMatrix[key] || { compatibility: 'low', dataLossRisk: 'high' }
+
+    const warnings: string[] = []
+    const recommendations: string[] = []
+
+    // Add warnings based on compatibility
+    if (compatibility.compatibility === 'low') {
+        warnings.push('Low compatibility between variants - significant changes expected')
+    }
+    if (compatibility.dataLossRisk === 'high') {
+        warnings.push('High risk of data loss during migration')
+    }
+
+    // Add recommendations
+    if (compatibility.dataLossRisk !== 'none') {
+        recommendations.push('Review migrated content carefully')
+        recommendations.push('Consider duplicating the section before migration')
+    }
+    if (compatibility.compatibility === 'low') {
+        recommendations.push('Consider manual recreation for better results')
+    }
+
+    return {
+        isSupported: getMigrationFunction(sourceVariant, targetVariant) !== null,
+        compatibility: compatibility.compatibility,
+        warnings,
+        dataLossRisk: compatibility.dataLossRisk,
+        recommendations
+    }
+}
+
+/**
+ * Get migration preview without actually performing the migration
+ */
+export function getMigrationPreview(
+    sourceProps: HeroProps,
+    targetVariant: HeroVariant,
+    strategy: MigrationStrategy = MIGRATION_STRATEGIES.balanced
+): {
+    willMigrate: string[]
+    willLose: string[]
+    willAdd: string[]
+    warnings: string[]
+} {
+    const result = migrateHeroSection(sourceProps, targetVariant, strategy)
     
     return {
-        preview: migration.newProps,
-        warnings: migration.warnings || [],
-        recommendations
+        willMigrate: Object.keys(sourceProps).filter(key => 
+            key in result.migratedProps && 
+            !['id', 'variant'].includes(key)
+        ),
+        willLose: result.lostData.map(item => item.property),
+        willAdd: result.addedDefaults.map(item => item.property),
+        warnings: result.warnings
     }
 }

@@ -24,6 +24,24 @@ import {
 import { usePerformanceOptimization, useCriticalCSS } from './usePerformanceOptimization'
 
 /**
+ * Safe hook to use site config with fallback when context is not available
+ */
+function useSafeConfig() {
+    try {
+        return useSiteConfig()
+    } catch (error) {
+        // Return fallback values when SiteConfigProvider is not available
+        return {
+            config: null,
+            loading: false,
+            error: null,
+            updateConfig: async () => {},
+            refreshConfig: async () => {}
+        }
+    }
+}
+
+/**
  * Hook for integrating hero sections with the site configuration context
  * Provides theme integration, CSS variable mapping, and responsive design support
  */
@@ -31,7 +49,7 @@ export function useThemeIntegration(
     baseTheme?: Partial<ThemeConfig>,
     responsive?: ResponsiveConfig
 ) {
-    const { config: siteConfig, loading } = useSiteConfig()
+    const { config: siteConfig, loading } = useSafeConfig()
     const elementRef = useRef<HTMLElement>(null)
 
     // Integrate base theme with site configuration
@@ -399,13 +417,13 @@ export function useHeroIntegration(
     const responsiveDesign = useResponsiveDesign(responsive)
     const accessibilityFeatures = useAccessibility(accessibility)
 
-    // Always call hooks, but conditionally use the results
+    // Always call hooks with default values to avoid conditional calls
     const performanceOptimization = usePerformanceOptimization({
         variant: variant || HeroVariant.CENTERED,
         enableMonitoring: process.env.NODE_ENV === 'development'
     })
 
-    // Always call critical CSS hook
+    // Always call critical CSS hook with default variant
     const criticalCSS = useCriticalCSS(variant || HeroVariant.CENTERED)
 
     // Combine all refs into one
@@ -451,26 +469,60 @@ export function usePerformantThemeIntegration(
         screenReaderSupport: true,
         reducedMotion: false,
         highContrast: false,
-        ariaLabels: {}
+        ariaLabels: {},
+        altTexts: {}
     }
 
+    const defaultTheme = getDefaultThemeConfig()
+    const mergedTheme = baseTheme ? { ...defaultTheme, ...baseTheme } : defaultTheme
+
     return useHeroIntegration(
-        baseTheme || getDefaultThemeConfig(),
+        mergedTheme,
         responsive || {
             mobile: {
-                layout: { direction: 'column', alignment: 'center', justification: 'center', gap: '1rem' },
+                layout: { 
+                    direction: 'column', 
+                    alignment: 'center', 
+                    justification: 'center', 
+                    gap: '1rem',
+                    padding: '1rem',
+                    margin: '0'
+                },
                 typography: { fontSize: 'base', lineHeight: '1.5', fontWeight: 'normal', textAlign: 'center' },
-                spacing: { padding: { top: '2rem', right: '1rem', bottom: '2rem', left: '1rem' } }
+                spacing: { 
+                    padding: { top: '2rem', right: '1rem', bottom: '2rem', left: '1rem' },
+                    margin: { top: '0', right: '0', bottom: '0', left: '0' }
+                }
             },
             tablet: {
-                layout: { direction: 'row', alignment: 'center', justification: 'center', gap: '2rem' },
+                layout: { 
+                    direction: 'row', 
+                    alignment: 'center', 
+                    justification: 'center', 
+                    gap: '2rem',
+                    padding: '2rem',
+                    margin: '0'
+                },
                 typography: { fontSize: 'lg', lineHeight: '1.5', fontWeight: 'normal', textAlign: 'center' },
-                spacing: { padding: { top: '3rem', right: '2rem', bottom: '3rem', left: '2rem' } }
+                spacing: { 
+                    padding: { top: '3rem', right: '2rem', bottom: '3rem', left: '2rem' },
+                    margin: { top: '0', right: '0', bottom: '0', left: '0' }
+                }
             },
             desktop: {
-                layout: { direction: 'row', alignment: 'center', justification: 'center', gap: '3rem' },
+                layout: { 
+                    direction: 'row', 
+                    alignment: 'center', 
+                    justification: 'center', 
+                    gap: '3rem',
+                    padding: '3rem',
+                    margin: '0'
+                },
                 typography: { fontSize: 'xl', lineHeight: '1.5', fontWeight: 'normal', textAlign: 'center' },
-                spacing: { padding: { top: '4rem', right: '3rem', bottom: '4rem', left: '3rem' } }
+                spacing: { 
+                    padding: { top: '4rem', right: '3rem', bottom: '4rem', left: '3rem' },
+                    margin: { top: '0', right: '0', bottom: '0', left: '0' }
+                }
             }
         },
         accessibility || defaultAccessibility,

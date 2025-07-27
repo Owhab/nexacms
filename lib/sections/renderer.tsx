@@ -340,6 +340,9 @@ function ImageTextStorefront({ props }: { props: any }) {
                                 src={props.image}
                                 alt={props.imageAlt || ''}
                                 className="w-full h-auto rounded-lg shadow-lg"
+                                height="250"
+                                width="350"
+
                             />
                         ) : (
                             <div className="w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center">

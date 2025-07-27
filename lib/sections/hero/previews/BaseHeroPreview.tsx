@@ -15,7 +15,7 @@ import {
 import {
     generateTextClasses,
     generateButtonClasses,
-    optimizeImageUrl,
+    optimizeMediaUrl,
     shouldLazyLoad,
     generateImageAltText,
     generateInteractiveAriaProps,
@@ -220,7 +220,7 @@ export function HeroImage({
 }: HeroImageProps) {
     if (!media || !media.url) return null
 
-    const optimizedUrl = optimizeImageUrl(media, undefined, 85)
+    const optimizedUrl = optimizeMediaUrl(media, undefined, 85)
     const loading = priority ? 'eager' : (media.loading || 'lazy')
 
     // Generate contextual alt text
@@ -244,8 +244,8 @@ export function HeroImage({
             style={style}
             loading={loading}
             sizes={sizes}
-            width={media.width}
-            height={media.height}
+            width={media.width || 1200}
+            height={media.height || 800}
             role={isDecorative ? 'presentation' : undefined}
             aria-hidden={isDecorative}
         />
@@ -296,8 +296,8 @@ export function HeroVideo({
             muted={media.muted}
             controls={media.controls}
             poster={media.poster}
-            width={media.width}
-            height={media.height}
+            width={media.width || 800}
+            height={media.height || 600}
             {...videoAccessibilityProps}
         >
             <source src={media.url} type="video/mp4" />

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import React, { useState, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import {
     getActiveSections,
@@ -64,6 +64,18 @@ export function SectionLibrary({ isOpen, onClose, onAddSection }: SectionLibrary
         { label: 'Social Proof', value: 'testimonial' },
         { label: 'Feature Showcase', value: 'features' }
     ]
+
+    // Get hero section statistics for display
+    const heroStats = React.useMemo(() => {
+        const allHero = getHeroSections()
+        return {
+            total: allHero.length,
+            byCategory: heroFilterOptions.slice(1).map(option => ({
+                label: option.label,
+                count: getHeroSectionsByTag(option.value).length
+            }))
+        }
+    }, [])
 
     if (!isOpen) return null
 
@@ -147,20 +159,81 @@ export function SectionLibrary({ isOpen, onClose, onAddSection }: SectionLibrary
                         {/* Hero-specific filters */}
                         {selectedCategory === SECTION_CATEGORIES.HERO && (
                             <div className="border-t border-gray-200 pt-4">
-                                <h4 className="text-sm font-medium text-gray-700 mb-2">Hero Section Types</h4>
+                                <div className="flex items-center justify-between mb-3">
+                                    <h4 className="text-sm font-medium text-gray-700">Hero Section Types</h4>
+                                    <div className="text-xs text-gray-500 bg-blue-50 px-2 py-1 rounded">
+                                        {heroStats.total} variants available
+                                    </div>
+                                </div>
                                 <div className="flex flex-wrap gap-2">
-                                    {heroFilterOptions.map((option) => (
-                                        <button
-                                            key={option.value}
-                                            onClick={() => setHeroFilter(option.value)}
-                                            className={`px-3 py-1 text-sm rounded-full transition-colors ${heroFilter === option.value
-                                                    ? 'bg-purple-100 text-purple-700 border border-purple-200'
-                                                    : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-                                                }`}
-                                        >
-                                            {option.label}
-                                        </button>
-                                    ))}
+                                    {heroFilterOptions.map((option) => {
+                                        const categoryCount = option.value === 'all' 
+                                            ? heroStats.total 
+                                            : heroStats.byCategory.find(cat => cat.label === option.label)?.count || 0
+                                        
+                                        return (
+                                            <button
+                                                key={option.value}
+                                                onClick={() => setHeroFilter(option.value)}
+                                                className={`px-3 py-1 text-sm rounded-full transition-colors flex items-center gap-1 ${heroFilter === option.value
+                                                        ? 'bg-purple-100 text-purple-700 border border-purple-200'
+                                                        : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                                                    }`}
+                                            >
+                                                {option.label}
+                                                {option.value !== 'all' && (
+                                                    <span className="text-xs opacity-75">({categoryCount})</span>
+                                                )}
+                                            </button>
+                                        )
+                                    })}
+                                </div>
+                                
+                                {/* Hero Variants Quick Preview */}
+                                <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-100">
+                                    <div className="text-xs font-medium text-blue-900 mb-2">✨ All 10 Hero Variants Available</div>
+                                    <div className="grid grid-cols-5 gap-2 text-xs">
+                                        <div className="flex items-center gap-1 text-blue-700">
+                                            <span>🎯</span>
+                                            <span>Centered</span>
+                                        </div>
+                                        <div className="flex items-center gap-1 text-blue-700">
+                                            <span>📱</span>
+                                            <span>Split Screen</span>
+                                        </div>
+                                        <div className="flex items-center gap-1 text-blue-700">
+                                            <span>🎥</span>
+                                            <span>Video</span>
+                                        </div>
+                                        <div className="flex items-center gap-1 text-blue-700">
+                                            <span>✨</span>
+                                            <span>Minimal</span>
+                                        </div>
+                                        <div className="flex items-center gap-1 text-blue-700">
+                                            <span>⚡</span>
+                                            <span>Feature</span>
+                                        </div>
+                                        <div className="flex items-center gap-1 text-blue-700">
+                                            <span>💬</span>
+                                            <span>Testimonial</span>
+                                        </div>
+                                        <div className="flex items-center gap-1 text-blue-700">
+                                            <span>🏢</span>
+                                            <span>Service</span>
+                                        </div>
+                                        <div className="flex items-center gap-1 text-blue-700">
+                                            <span>🛍️</span>
+                                            <span>Product</span>
+                                        </div>
+                                        <div className="flex items-center gap-1 text-blue-700">
+                                            <span>🖼️</span>
+                                            <span>Gallery</span>
+                                        </div>
+                                        <div className="flex items-center gap-1 text-blue-700">
+                                            <span>🎯</span>
+                                            <span>CTA</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         )}

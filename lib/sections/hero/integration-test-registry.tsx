@@ -15,12 +15,16 @@ import {
     isHeroSection,
     getHeroSectionConfig,
     validateHeroSectionIntegration,
-    migrateHeroSection,
     HERO_MIGRATION_MAP
 } from '../registry'
 import { HeroSectionFactory } from './factory'
-import { HeroVariant } from './types'
-import { migrateLegacyHeroSection, getRecommendedVariants } from './migration'
+import { HeroVariant, HeroCenteredProps } from './types'
+import { migrateHeroSection } from './migration'
+import {
+    getDefaultThemeConfig,
+    getDefaultResponsiveConfig,
+    getDefaultAccessibilityConfig
+} from './utils'
 
 /**
  * Test Component for Registry Integration
@@ -42,10 +46,10 @@ export function HeroRegistryIntegrationTest() {
                 'hero-feature', 'hero-testimonial', 'hero-service', 'hero-product',
                 'hero-gallery', 'hero-cta'
             ]
-            
+
             const registeredVariants = heroSections.map(section => section.id)
             const missingVariants = expectedVariants.filter(variant => !registeredVariants.includes(variant))
-            
+
             results.push({
                 test: 'Hero Variants Registration',
                 passed: missingVariants.length === 0,
@@ -67,9 +71,9 @@ export function HeroRegistryIntegrationTest() {
                 HeroSectionFactory.loadEditor(HeroVariant.GALLERY),
                 HeroSectionFactory.loadPreview(HeroVariant.GALLERY)
             ])
-            
+
             const loadingSuccess = loadingResults.filter(result => result.status === 'fulfilled').length
-            
+
             results.push({
                 test: 'Dynamic Component Loading',
                 passed: loadingSuccess === loadingResults.length,
@@ -88,7 +92,7 @@ export function HeroRegistryIntegrationTest() {
             const heroByTag = getHeroSectionsByTag('modern')
             const searchResults = searchHeroSections('gallery')
             const allVariants = getHeroVariants()
-            
+
             results.push({
                 test: 'Categorization and Filtering',
                 passed: heroByTag.length > 0 && searchResults.length > 0 && allVariants.length === 10,
@@ -108,14 +112,14 @@ export function HeroRegistryIntegrationTest() {
                 { id: 'text-block', expected: false },
                 { id: 'hero-section', expected: true }
             ]
-            
+
             const identificationResults = identificationTests.map(test => ({
                 id: test.id,
                 expected: test.expected,
                 actual: isHeroSection(test.id),
                 passed: isHeroSection(test.id) === test.expected
             }))
-            
+
             results.push({
                 test: 'Section Identification',
                 passed: identificationResults.every(result => result.passed),
@@ -124,36 +128,58 @@ export function HeroRegistryIntegrationTest() {
 
             // Test 5: Verify migration utilities
             console.log('🧪 Test 5: Migration Utilities')
-            const legacyProps = {
-                title: 'Welcome to Our Site',
-                subtitle: 'Amazing experiences await',
-                buttonText: 'Get Started',
-                buttonLink: '/signup',
-                backgroundImage: '/hero-bg.jpg',
+            // Create a proper hero props object for migration testing
+            const sourceHeroProps: HeroCenteredProps = {
+                id: 'legacy-hero',
+                variant: HeroVariant.CENTERED,
+                theme: getDefaultThemeConfig(),
+                responsive: getDefaultResponsiveConfig(),
+                accessibility: getDefaultAccessibilityConfig(),
+                title: {
+                    text: 'Welcome to Our Site',
+                    tag: 'h1'
+                },
+                subtitle: {
+                    text: 'Amazing experiences await',
+                    tag: 'h2'
+                },
+                primaryButton: {
+                    text: 'Get Started',
+                    url: '/signup',
+                    style: 'primary',
+                    size: 'lg',
+                    iconPosition: 'right',
+                    target: '_self'
+                },
+                background: {
+                    type: 'image',
+                    image: {
+                        id: 'hero-bg',
+                        url: '/hero-bg.jpg',
+                        type: 'image',
+                        alt: 'Hero background',
+                        objectFit: 'cover',
+                        loading: 'eager'
+                    }
+                },
                 textAlign: 'center'
             }
-            
-            const migrationResult = migrateHeroSection('hero-section', legacyProps)
-            const legacyMigration = migrateLegacyHeroSection(legacyProps)
-            const recommendations = getRecommendedVariants(legacyProps)
-            
+
+            const migrationResult = migrateHeroSection(sourceHeroProps, HeroVariant.MINIMAL)
+
             results.push({
                 test: 'Migration Utilities',
-                passed: migrationResult !== null && legacyMigration.success && recommendations.length > 0,
+                passed: migrationResult.success,
                 details: {
-                    migrationResult: migrationResult !== null,
-                    legacyMigration: legacyMigration.success,
-                    recommendations: recommendations.length,
-                    migrationData: migrationResult,
-                    legacyData: legacyMigration,
-                    recommendationData: recommendations
+                    migrationResult: migrationResult.success,
+                    migrationData: migrationResult
                 }
             })
 
             // Test 6: Verify registry validation
             console.log('🧪 Test 6: Registry Validation')
             const validation = validateHeroSectionIntegration()
-            
+
             results.push({
                 test: 'Registry Validation',
                 passed: validation.isValid,
@@ -168,15 +194,15 @@ export function HeroRegistryIntegrationTest() {
             // Test 7: Verify factory cache and preloading
             console.log('🧪 Test 7: Factory Cache and Preloading')
             const cacheStatsBefore = HeroSectionFactory.getCacheStats()
-            
+
             await HeroSectionFactory.preloadComponents([
                 HeroVariant.CENTERED,
                 HeroVariant.MINIMAL,
                 HeroVariant.CTA
             ])
-            
+
             const cacheStatsAfter = HeroSectionFactory.getCacheStats()
-            
+
             results.push({
                 test: 'Factory Cache and Preloading',
                 passed: cacheStatsAfter.cachedComponents > cacheStatsBefore.cachedComponents,
@@ -197,10 +223,10 @@ export function HeroRegistryIntegrationTest() {
                     hasResponsiveSupport: !!config?.responsiveSupport
                 }
             })
-            
+
             const themeCompatible = heroConfigs.filter(config => config.hasThemeCompatibility).length
             const responsiveSupport = heroConfigs.filter(config => config.hasResponsiveSupport).length
-            
+
             results.push({
                 test: 'Theme Compatibility',
                 passed: themeCompatible === heroConfigs.length && responsiveSupport === heroConfigs.length,
@@ -245,11 +271,10 @@ export function HeroRegistryIntegrationTest() {
                 <button
                     onClick={runTests}
                     disabled={isRunning}
-                    className={`px-4 py-2 rounded-lg font-medium ${
-                        isRunning
-                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                            : 'bg-blue-600 text-white hover:bg-blue-700'
-                    }`}
+                    className={`px-4 py-2 rounded-lg font-medium ${isRunning
+                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                        }`}
                 >
                     {isRunning ? 'Running Tests...' : 'Run Integration Tests'}
                 </button>
@@ -260,11 +285,10 @@ export function HeroRegistryIntegrationTest() {
                     <div className="bg-white rounded-lg border border-gray-200 p-4">
                         <h2 className="text-lg font-semibold mb-2">Test Results</h2>
                         <div className="flex items-center gap-4 mb-4">
-                            <div className={`px-3 py-1 rounded-full text-sm font-medium ${
-                                passedTests === totalTests
-                                    ? 'bg-green-100 text-green-800'
-                                    : 'bg-red-100 text-red-800'
-                            }`}>
+                            <div className={`px-3 py-1 rounded-full text-sm font-medium ${passedTests === totalTests
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-red-100 text-red-800'
+                                }`}>
                                 {passedTests}/{totalTests} Tests Passed
                             </div>
                             <div className="text-sm text-gray-500">
@@ -279,23 +303,21 @@ export function HeroRegistryIntegrationTest() {
                 {testResults.map((result, index) => (
                     <div
                         key={index}
-                        className={`border rounded-lg p-4 ${
-                            result.passed
-                                ? 'border-green-200 bg-green-50'
-                                : 'border-red-200 bg-red-50'
-                        }`}
+                        className={`border rounded-lg p-4 ${result.passed
+                            ? 'border-green-200 bg-green-50'
+                            : 'border-red-200 bg-red-50'
+                            }`}
                     >
                         <div className="flex items-center justify-between mb-2">
                             <h3 className="font-medium text-gray-900">{result.test}</h3>
-                            <span className={`px-2 py-1 rounded text-sm font-medium ${
-                                result.passed
-                                    ? 'bg-green-100 text-green-800'
-                                    : 'bg-red-100 text-red-800'
-                            }`}>
+                            <span className={`px-2 py-1 rounded text-sm font-medium ${result.passed
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-red-100 text-red-800'
+                                }`}>
                                 {result.passed ? 'PASS' : 'FAIL'}
                             </span>
                         </div>
-                        
+
                         <details className="mt-2">
                             <summary className="cursor-pointer text-sm text-gray-600 hover:text-gray-800">
                                 View Details

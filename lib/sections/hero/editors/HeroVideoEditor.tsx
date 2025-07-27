@@ -382,7 +382,7 @@ export function HeroVideoEditor(props: HeroEditorProps<HeroVideoProps>) {
     }
 
     // Create a wrapper component that matches the expected interface
-    const PreviewWrapper = ({ props: previewProps }: { props: HeroVideoProps }) => (
+    const PreviewWrapper = (previewProps: HeroVideoProps & { isPreview?: boolean; previewMode?: 'mobile' | 'tablet' | 'desktop' }) => (
         <HeroVideoPreview {...previewProps} />
     )
 

@@ -293,7 +293,7 @@ export function HeroCenteredEditor(props: HeroEditorProps<HeroCenteredProps>) {
     }
 
     // Create a wrapper component that matches the expected interface
-    const PreviewWrapper = ({ props: previewProps }: { props: HeroCenteredProps }) => (
+    const PreviewWrapper = (previewProps: HeroCenteredProps & { isPreview?: boolean; previewMode?: 'mobile' | 'tablet' | 'desktop' }) => (
         <HeroCenteredPreview {...previewProps} />
     )
 

@@ -16,8 +16,45 @@ export { HeroSectionFactory, useHeroSection, useHeroPreloader } from './factory'
 // Components are now loaded on-demand for better performance
 
 // Performance-optimized components
-export * from './components/LazyImage'
-export * from './components/LazyVideo'
+export { LazyImage } from './components/LazyImage'
+export { LazyVideo as SimpleLazyVideo } from './components/LazyImage'
+export { LazyVideo, OptimizedVideo, getSupportedVideoFormat } from './components/LazyVideo'
+
+// Error handling and validation components
+export { 
+    HeroSectionErrorBoundary, 
+    withHeroErrorBoundary, 
+    useHeroErrorHandler,
+    HeroSectionError,
+    HeroMediaError,
+    HeroValidationError,
+    HeroRenderError,
+    HeroErrorProvider,
+    useHeroError
+} from './components/ErrorBoundary'
+
+// Validation system
+export { 
+    heroSectionValidator, 
+    HeroSectionValidator,
+    ValidationUtils 
+} from './validation'
+
+// Server-side validation
+export { 
+    heroServerValidator,
+    HeroServerValidator,
+    validateHeroSectionMiddleware,
+    validateMediaUploadMiddleware
+} from './server-validation'
+
+// Fallback system
+export { 
+    useHeroFallbacks,
+    useHeroSectionData,
+    useMediaFallback,
+    createEmergencyFallback
+} from './hooks/useHeroFallbacks'
 
 // For backward compatibility, provide lazy-loaded exports
 export const HeroCentered = () => import('./variants/HeroCentered').then(m => m.HeroCentered)

@@ -156,6 +156,8 @@ export function HeroVideo({
                                 src={video.poster}
                                 alt="Video background"
                                 className="absolute inset-0 w-full h-full object-cover"
+                                width={video.width || 800}
+                                height={video.height || 600}
                                 style={{
                                     objectFit: video.objectFit || 'cover'
                                 }}

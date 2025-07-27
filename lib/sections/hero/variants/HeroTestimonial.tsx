@@ -257,6 +257,8 @@ function TestimonialCard({ testimonial, showRating, layout }: TestimonialCardPro
                             src={testimonial.avatar.url}
                             alt={testimonial.avatar.alt || `${testimonial.author} avatar`}
                             className="w-16 h-16 mx-auto rounded-full object-cover border-2 border-white/20"
+                            width={testimonial.avatar.width || 64}
+                            height={testimonial.avatar.height || 64}
                             loading="lazy"
                         />
                     </div>

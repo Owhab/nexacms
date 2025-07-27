@@ -2547,3 +2547,27 @@ export const DEFAULT_HERO_CONFIG: Partial<HeroSectionConfig> = {
         responsiveTypography: true
     }
 }
+
+// Export functions for accessing the registry
+export function getAllHeroSections(): HeroSectionConfig[] {
+    return Object.values(HERO_SECTION_REGISTRY)
+}
+
+export function getHeroSectionConfigByVariant(variant: HeroVariant): HeroSectionConfig | undefined {
+    const key = Object.keys(HERO_SECTION_REGISTRY).find(
+        key => HERO_SECTION_REGISTRY[key].variant === variant
+    )
+    return key ? HERO_SECTION_REGISTRY[key] : undefined
+}
+
+export function getHeroSectionById(id: string): HeroSectionConfig | undefined {
+    return HERO_SECTION_REGISTRY[id]
+}
+
+export function getHeroSectionsByTag(tag: string): HeroSectionConfig[] {
+    return Object.values(HERO_SECTION_REGISTRY).filter(
+        section => section.tags.includes(tag)
+    )
+}
+
+export { HERO_SECTION_REGISTRY as heroSectionRegistry }

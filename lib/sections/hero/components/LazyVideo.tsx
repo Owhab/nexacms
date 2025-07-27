@@ -160,6 +160,8 @@ export function LazyVideo({
               src={poster} 
               alt="Video poster" 
               className="w-full h-full object-cover"
+              width={800}
+              height={600}
             />
           ) : (
             <div className="text-center">
@@ -181,6 +183,8 @@ export function LazyVideo({
                 src={poster} 
                 alt="Video poster fallback" 
                 className="mt-2 max-w-full max-h-32 object-cover rounded"
+                width={200}
+                height={128}
               />
             )}
           </div>

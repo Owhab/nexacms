@@ -251,7 +251,7 @@ export function HeroMinimalEditor(props: HeroEditorProps<HeroMinimalProps>) {
     }
 
     // Create a wrapper component that matches the expected interface
-    const PreviewWrapper = ({ props: previewProps }: { props: HeroMinimalProps }) => (
+    const PreviewWrapper = (previewProps: HeroMinimalProps & { isPreview?: boolean; previewMode?: 'mobile' | 'tablet' | 'desktop' }) => (
         <HeroMinimalPreview {...previewProps} />
     )
 

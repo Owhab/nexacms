@@ -15,6 +15,8 @@ export function ImageTextPreview({ props }: ImageTextPreviewProps) {
                             alt={props.imageAlt || ''}
                             className="w-full h-auto rounded-lg shadow-sm"
                             style={{ maxHeight: '300px', objectFit: 'cover' }}
+                            width={600}
+                            height={300}
                         />
                     ) : (
                         <div className="w-full h-48 bg-gray-200 rounded-lg flex items-center justify-center">

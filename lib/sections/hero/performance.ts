@@ -120,7 +120,7 @@ export function optimizeImageUrl(
 }
 
 // Generate responsive image srcset
-export function generateResponsiveImageSrcSet(
+export function generateOptimizedImageSrcSet(
   url: string,
   breakpoints: number[] = [480, 768, 1024, 1280, 1536, 1920]
 ): string {
@@ -230,7 +230,7 @@ export function optimizeVideoUrl(
 }
 
 // Performance monitoring utilities
-export interface PerformanceMetrics {
+export interface HeroPerformanceMetrics {
   componentRenderTime: number
   imageLoadTime: number
   videoLoadTime: number
@@ -239,7 +239,7 @@ export interface PerformanceMetrics {
 }
 
 export class HeroPerformanceMonitor {
-  private metrics: Partial<PerformanceMetrics> = {}
+  private metrics: Partial<HeroPerformanceMetrics> = {}
   private observers: PerformanceObserver[] = []
 
   constructor() {
@@ -265,10 +265,11 @@ export class HeroPerformanceMonitor {
     const resourceObserver = new PerformanceObserver((list) => {
       const entries = list.getEntries()
       entries.forEach((entry) => {
-        if (entry.name.includes('hero') && entry.initiatorType === 'img') {
+        const resourceEntry = entry as PerformanceResourceTiming
+        if (entry.name.includes('hero') && resourceEntry.initiatorType === 'img') {
           this.metrics.imageLoadTime = entry.duration
         }
-        if (entry.name.includes('hero') && entry.initiatorType === 'video') {
+        if (entry.name.includes('hero') && resourceEntry.initiatorType === 'video') {
           this.metrics.videoLoadTime = entry.duration
         }
       })
@@ -313,7 +314,7 @@ export class HeroPerformanceMonitor {
     })
   }
 
-  getMetrics(): Partial<PerformanceMetrics> {
+  getMetrics(): Partial<HeroPerformanceMetrics> {
     return { ...this.metrics }
   }
 

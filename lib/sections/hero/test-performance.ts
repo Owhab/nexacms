@@ -3,7 +3,7 @@
 import { 
   optimizeImageUrl, 
   optimizeVideoUrl,
-  generateResponsiveImageSrcSet,
+  generateOptimizedImageSrcSet,
   generateResponsiveImageSizes,
   HeroPerformanceMonitor,
   analyzeBundleSize,
@@ -34,7 +34,7 @@ export function testImageOptimization() {
   console.log('Optimized URL:', optimized)
   
   // Test responsive srcset generation
-  const srcSet = generateResponsiveImageSrcSet(testUrl)
+  const srcSet = generateOptimizedImageSrcSet(testUrl)
   console.log('Responsive srcSet:', srcSet)
   
   // Test responsive sizes
@@ -256,9 +256,9 @@ export async function benchmarkPerformance() {
   
   const iterations = 100
   const results = {
-    imageOptimization: [],
-    componentLoading: [],
-    renderTimes: []
+    imageOptimization: [] as number[],
+    componentLoading: [] as number[],
+    renderTimes: [] as number[]
   }
   
   // Benchmark image optimization

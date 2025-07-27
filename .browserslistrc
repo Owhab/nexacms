@@ -1,0 +1,16 @@
+# Browserslist configuration for hero sections
+# Supports 95% of users globally
+
+> 0.5%
+last 2 versions
+not dead
+not ie 11
+not op_mini all
+
+# Specific browser versions
+Chrome >= 88
+Firefox >= 85
+Safari >= 14
+Edge >= 88
+iOS >= 14
+Android >= 88

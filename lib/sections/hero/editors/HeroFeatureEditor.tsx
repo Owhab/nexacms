@@ -286,7 +286,7 @@ export function HeroFeatureEditor(props: HeroEditorProps<HeroFeatureProps>) {
     }
 
     // Create a wrapper component that matches the expected interface
-    const PreviewWrapper = ({ props: previewProps }: { props: HeroFeatureProps }) => (
+    const PreviewWrapper = (previewProps: HeroFeatureProps & { isPreview?: boolean; previewMode?: 'mobile' | 'tablet' | 'desktop' }) => (
         <HeroFeaturePreview {...previewProps} />
     )
 

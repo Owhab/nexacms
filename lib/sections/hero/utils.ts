@@ -203,18 +203,22 @@ function evaluateCondition(condition: string, theme: ThemeConfig): boolean {
 
 // Enhanced responsive utilities
 export function getResponsiveClasses(
-    config: ResponsiveConfig,
+    config: ResponsiveConfig | undefined,
     property: keyof ResponsiveBreakpoint['layout']
 ): string {
+    if (!config || !config.mobile || !config.tablet || !config.desktop) {
+        return ''
+    }
+
     const { mobile, tablet, desktop } = config
     const classes: string[] = []
 
     // Mobile first approach
-    if (mobile.layout[property]) {
+    if (mobile.layout && mobile.layout[property]) {
         classes.push(getResponsiveClass('', property, mobile.layout[property]))
     }
 
-    if (tablet.layout[property] && tablet.layout[property] !== mobile.layout[property]) {
+    if (tablet.layout && tablet.layout[property] && tablet.layout[property] !== mobile.layout[property]) {
         classes.push(getResponsiveClass('md:', property, tablet.layout[property]))
     }
 
@@ -243,21 +247,28 @@ export function generateResponsiveClasses(
 }
 
 // Generate responsive spacing classes
-export function getResponsiveSpacingClasses(config: ResponsiveConfig): string {
+export function getResponsiveSpacingClasses(config: ResponsiveConfig | undefined): string {
+    // Return empty string if config is undefined
+    if (!config) {
+        return ''
+    }
+
     const classes: string[] = []
 
     // Mobile spacing
-    const mobilePadding = config.mobile.spacing.padding
-    classes.push(
-        `pt-${getSpacingValue(mobilePadding.top)}`,
-        `pr-${getSpacingValue(mobilePadding.right)}`,
-        `pb-${getSpacingValue(mobilePadding.bottom)}`,
-        `pl-${getSpacingValue(mobilePadding.left)}`
-    )
+    const mobilePadding = config.mobile?.spacing?.padding
+    if (mobilePadding) {
+        classes.push(
+            `pt-${getSpacingValue(mobilePadding.top)}`,
+            `pr-${getSpacingValue(mobilePadding.right)}`,
+            `pb-${getSpacingValue(mobilePadding.bottom)}`,
+            `pl-${getSpacingValue(mobilePadding.left)}`
+        )
+    }
 
     // Tablet spacing
-    const tabletPadding = config.tablet.spacing.padding
-    if (isDifferentSpacing(mobilePadding, tabletPadding)) {
+    const tabletPadding = config.tablet?.spacing?.padding
+    if (tabletPadding && mobilePadding && isDifferentSpacing(mobilePadding, tabletPadding)) {
         classes.push(
             `md:pt-${getSpacingValue(tabletPadding.top)}`,
             `md:pr-${getSpacingValue(tabletPadding.right)}`,
@@ -267,8 +278,8 @@ export function getResponsiveSpacingClasses(config: ResponsiveConfig): string {
     }
 
     // Desktop spacing
-    const desktopPadding = config.desktop.spacing.padding
-    if (isDifferentSpacing(tabletPadding, desktopPadding)) {
+    const desktopPadding = config.desktop?.spacing?.padding
+    if (desktopPadding && tabletPadding && isDifferentSpacing(tabletPadding, desktopPadding)) {
         classes.push(
             `lg:pt-${getSpacingValue(desktopPadding.top)}`,
             `lg:pr-${getSpacingValue(desktopPadding.right)}`,
@@ -349,19 +360,24 @@ function getResponsiveClass(prefix: string, property: string, value: any): strin
     return `${prefix}${mappedProperty}-${mappedValue}`
 }
 
-export function getResponsiveTypographyClasses(config: ResponsiveConfig): string {
+export function getResponsiveTypographyClasses(config: ResponsiveConfig | undefined): string {
+    // Return empty string if config is undefined
+    if (!config) {
+        return ''
+    }
+
     const classes: string[] = []
 
     // Font size classes
-    if (config.mobile.typography.fontSize) {
+    if (config.mobile?.typography?.fontSize) {
         classes.push(getFontSizeClass(config.mobile.typography.fontSize))
     }
 
-    if (config.tablet.typography.fontSize) {
+    if (config.tablet?.typography?.fontSize) {
         classes.push(`md:${getFontSizeClass(config.tablet.typography.fontSize)}`)
     }
 
-    if (config.desktop.typography.fontSize) {
+    if (config.desktop?.typography?.fontSize) {
         classes.push(`lg:${getFontSizeClass(config.desktop.typography.fontSize)}`)
     }
 
@@ -463,7 +479,7 @@ export function generateBackgroundClasses(background: BackgroundConfig): string[
 }
 
 // Media utilities (enhanced with performance optimizations)
-export function optimizeImageUrl(media: MediaConfig, width?: number, quality?: number): string {
+export function optimizeMediaUrl(media: MediaConfig, width?: number, quality?: number): string {
     const { url } = media
 
     // If it's already optimized or external, return as-is
@@ -492,7 +508,7 @@ export function generateResponsiveImageSrcSet(media: MediaConfig): string {
     const breakpoints = [480, 768, 1024, 1280, 1536]
 
     return breakpoints
-        .map(width => `${optimizeImageUrl(media, width)} ${width}w`)
+        .map(width => `${optimizeMediaUrl(media, width)} ${width}w`)
         .join(', ')
 }
 
@@ -625,8 +641,13 @@ export function generateAnimationClasses(animation?: AnimationConfig): string[] 
 }
 
 // Enhanced Accessibility utilities
-export function generateAccessibilityProps(config: AccessibilityConfig): Record<string, any> {
+export function generateAccessibilityProps(config: AccessibilityConfig | undefined): Record<string, any> {
     const props: Record<string, any> = {}
+
+    // Return empty props if config is undefined
+    if (!config) {
+        return props
+    }
 
     if (config.ariaLabels) {
         Object.entries(config.ariaLabels).forEach(([key, value]) => {
@@ -664,7 +685,12 @@ export function generateAriaLabel(variant: HeroVariant, title?: string): string 
         [HeroVariant.GALLERY]: 'gallery hero section'
     }
 
-    const baseLabel = variantLabels[variant] || `${variant.replace('-', ' ')} hero section`
+    // Handle undefined or invalid variant
+    if (!variant) {
+        return title ? `hero section: ${title}` : 'hero section'
+    }
+
+    const baseLabel = variantLabels[variant] || `${String(variant).replace('-', ' ')} hero section`
     return title ? `${baseLabel}: ${title}` : baseLabel
 }
 

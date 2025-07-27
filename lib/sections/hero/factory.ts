@@ -222,9 +222,42 @@ export class HeroSectionFactory {
         
         return monitor.measureAsyncOperation(`load-component-${variant}`, (async () => {
             try {
-                // Use lazy loading utility for better performance
-                const LazyComponent = lazyLoadHeroVariant(variant)
-                return LazyComponent
+                // Load the actual component module directly instead of using lazy loading
+                switch (variant) {
+                    case HeroVariant.CENTERED:
+                        const { HeroCentered } = await import('./variants/HeroCentered')
+                        return HeroCentered
+                    case HeroVariant.SPLIT_SCREEN:
+                        const { HeroSplitScreen } = await import('./variants/HeroSplitScreen')
+                        return HeroSplitScreen
+                    case HeroVariant.VIDEO:
+                        const { HeroVideo } = await import('./variants/HeroVideo')
+                        return HeroVideo
+                    case HeroVariant.MINIMAL:
+                        const { HeroMinimal } = await import('./variants/HeroMinimal')
+                        return HeroMinimal
+                    case HeroVariant.FEATURE:
+                        const { HeroFeature } = await import('./variants/HeroFeature')
+                        return HeroFeature
+                    case HeroVariant.TESTIMONIAL:
+                        const { HeroTestimonial } = await import('./variants/HeroTestimonial')
+                        return HeroTestimonial
+                    case HeroVariant.PRODUCT:
+                        const { HeroProduct } = await import('./variants/HeroProduct')
+                        return HeroProduct
+                    case HeroVariant.SERVICE:
+                        const { HeroService } = await import('./variants/HeroService')
+                        return HeroService
+                    case HeroVariant.CTA:
+                        const { HeroCTA } = await import('./variants/HeroCTA')
+                        return HeroCTA
+                    case HeroVariant.GALLERY:
+                        const { HeroGallery } = await import('./variants/HeroGallery')
+                        return HeroGallery
+                    default:
+                        const { HeroCentered: DefaultHero } = await import('./variants/HeroCentered')
+                        return DefaultHero
+                }
             } catch (error) {
                 // Fallback to base component if specific variant not found
                 console.warn(`Specific component not found for ${variant}, using base component`)
@@ -254,9 +287,42 @@ export class HeroSectionFactory {
         
         return monitor.measureAsyncOperation(`load-editor-${variant}`, (async () => {
             try {
-                // Use lazy loading utility for better performance
-                const LazyEditor = lazyLoadHeroEditor(variant)
-                return LazyEditor
+                // Load the actual editor module directly instead of using lazy loading
+                switch (variant) {
+                    case HeroVariant.CENTERED:
+                        const { HeroCenteredEditor } = await import('./editors/HeroCenteredEditor')
+                        return HeroCenteredEditor
+                    case HeroVariant.SPLIT_SCREEN:
+                        const { HeroSplitScreenEditor } = await import('./editors/HeroSplitScreenEditor')
+                        return HeroSplitScreenEditor
+                    case HeroVariant.VIDEO:
+                        const { HeroVideoEditor } = await import('./editors/HeroVideoEditor')
+                        return HeroVideoEditor
+                    case HeroVariant.MINIMAL:
+                        const { HeroMinimalEditor } = await import('./editors/HeroMinimalEditor')
+                        return HeroMinimalEditor
+                    case HeroVariant.FEATURE:
+                        const { HeroFeatureEditor } = await import('./editors/HeroFeatureEditor')
+                        return HeroFeatureEditor
+                    case HeroVariant.TESTIMONIAL:
+                        const { HeroTestimonialEditor } = await import('./editors/HeroTestimonialEditor')
+                        return HeroTestimonialEditor
+                    case HeroVariant.PRODUCT:
+                        const { HeroProductEditor } = await import('./editors/HeroProductEditor')
+                        return HeroProductEditor
+                    case HeroVariant.SERVICE:
+                        const { HeroServiceEditor } = await import('./editors/HeroServiceEditor')
+                        return HeroServiceEditor
+                    case HeroVariant.CTA:
+                        const { HeroCTAEditor } = await import('./editors/HeroCTAEditor')
+                        return HeroCTAEditor
+                    case HeroVariant.GALLERY:
+                        const { HeroGalleryEditor } = await import('./editors/HeroGalleryEditor')
+                        return HeroGalleryEditor
+                    default:
+                        const { HeroCenteredEditor: DefaultEditor } = await import('./editors/HeroCenteredEditor')
+                        return DefaultEditor
+                }
             } catch (error) {
                 // Fallback to base editor if specific variant not found
                 console.warn(`Specific editor not found for ${variant}, using base editor`)
@@ -274,9 +340,42 @@ export class HeroSectionFactory {
         
         return monitor.measureAsyncOperation(`load-preview-${variant}`, (async () => {
             try {
-                // Use lazy loading utility for better performance
-                const LazyPreview = lazyLoadHeroPreview(variant)
-                return LazyPreview
+                // Load the actual preview module directly instead of using lazy loading
+                switch (variant) {
+                    case HeroVariant.CENTERED:
+                        const { HeroCenteredPreview } = await import('./previews/HeroCenteredPreview')
+                        return HeroCenteredPreview
+                    case HeroVariant.SPLIT_SCREEN:
+                        const { HeroSplitScreenPreview } = await import('./previews/HeroSplitScreenPreview')
+                        return HeroSplitScreenPreview
+                    case HeroVariant.VIDEO:
+                        const { HeroVideoPreview } = await import('./previews/HeroVideoPreview')
+                        return HeroVideoPreview
+                    case HeroVariant.MINIMAL:
+                        const { HeroMinimalPreview } = await import('./previews/HeroMinimalPreview')
+                        return HeroMinimalPreview
+                    case HeroVariant.FEATURE:
+                        const { HeroFeaturePreview } = await import('./previews/HeroFeaturePreview')
+                        return HeroFeaturePreview
+                    case HeroVariant.TESTIMONIAL:
+                        const { HeroTestimonialPreview } = await import('./previews/HeroTestimonialPreview')
+                        return HeroTestimonialPreview
+                    case HeroVariant.PRODUCT:
+                        const { HeroProductPreview } = await import('./previews/HeroProductPreview')
+                        return HeroProductPreview
+                    case HeroVariant.SERVICE:
+                        const { HeroServicePreview } = await import('./previews/HeroServicePreview')
+                        return HeroServicePreview
+                    case HeroVariant.CTA:
+                        const { HeroCTAPreview } = await import('./previews/HeroCTAPreview')
+                        return HeroCTAPreview
+                    case HeroVariant.GALLERY:
+                        const { HeroGalleryPreview } = await import('./previews/HeroGalleryPreview')
+                        return HeroGalleryPreview
+                    default:
+                        const { HeroCenteredPreview: DefaultPreview } = await import('./previews/HeroCenteredPreview')
+                        return DefaultPreview
+                }
             } catch (error) {
                 // Fallback to base preview if specific variant not found
                 console.warn(`Specific preview not found for ${variant}, using base preview`)

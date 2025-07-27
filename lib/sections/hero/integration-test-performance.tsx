@@ -1,14 +1,12 @@
 'use client'
 
-import React, { useEffect, useState, useCallback } from 'react'
-import { 
-  optimizeImageUrl, 
-  optimizeVideoUrl,
-  generateResponsiveImageSrcSet,
+import { useEffect, useState, useCallback } from 'react'
+import {
+  generateOptimizedImageSrcSet,
   generateResponsiveImageSizes,
   HeroPerformanceMonitor
 } from './performance'
-import { LazyImage, ResponsiveImage } from './components/LazyImage'
+import { LazyImage } from './components/LazyImage'
 import { LazyVideo, OptimizedVideo } from './components/LazyVideo'
 import { usePerformanceOptimization } from './hooks/usePerformanceOptimization'
 import { HeroVariant } from './types'
@@ -53,11 +51,11 @@ export function PerformanceIntegrationTest() {
         quality: 80,
         format: 'webp'
       })
-      
+
       results.imageOptimization = {
         original: testImageUrl,
         optimized: optimizedImageUrl,
-        srcSet: generateResponsiveImageSrcSet(testImageUrl),
+        srcSet: generateOptimizedImageSrcSet(testImageUrl),
         sizes: generateResponsiveImageSizes()
       }
 
@@ -68,7 +66,7 @@ export function PerformanceIntegrationTest() {
         quality: 'medium',
         format: 'webm'
       })
-      
+
       results.videoOptimization = {
         original: testVideoUrl,
         optimized: optimizedVideoUrl
@@ -85,7 +83,7 @@ export function PerformanceIntegrationTest() {
         return items.length
       })
 
-      const asyncResult = await measureAsync('test-async-operation', 
+      const asyncResult = await measureAsync('test-async-operation',
         new Promise(resolve => setTimeout(() => resolve('async complete'), 100))
       )
 
@@ -100,7 +98,7 @@ export function PerformanceIntegrationTest() {
       const monitor = new HeroPerformanceMonitor()
       const bundleSize = await monitor.getBundleSize()
       const memoryUsage = monitor.getMemoryUsage()
-      
+
       results.bundleAnalysis = {
         bundleSize,
         memoryUsage
@@ -113,7 +111,7 @@ export function PerformanceIntegrationTest() {
 
       setTestResults(results)
       console.log('✅ All performance tests completed successfully!')
-      
+
     } catch (error) {
       console.error('❌ Performance tests failed:', error)
       results.error = error instanceof Error ? error.message : 'Unknown error'
@@ -131,17 +129,16 @@ export function PerformanceIntegrationTest() {
   return (
     <div className="p-8 max-w-4xl mx-auto">
       <h1 className="text-3xl font-bold mb-8">Hero Sections Performance Integration Test</h1>
-      
+
       {/* Test Status */}
       <div className="mb-8 p-4 rounded-lg bg-gray-100">
         <h2 className="text-xl font-semibold mb-2">Test Status</h2>
-        <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-          isRunning 
-            ? 'bg-yellow-100 text-yellow-800' 
-            : Object.keys(testResults).length > 0 
-              ? 'bg-green-100 text-green-800' 
+        <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${isRunning
+            ? 'bg-yellow-100 text-yellow-800'
+            : Object.keys(testResults).length > 0
+              ? 'bg-green-100 text-green-800'
               : 'bg-gray-100 text-gray-800'
-        }`}>
+          }`}>
           {isRunning ? '🔄 Running Tests...' : Object.keys(testResults).length > 0 ? '✅ Tests Complete' : '⏳ Waiting...'}
         </div>
       </div>
@@ -153,25 +150,33 @@ export function PerformanceIntegrationTest() {
           <div>
             <h3 className="font-medium mb-2">Standard Lazy Image</h3>
             <LazyImage
-              src="/assets/hero/1752750261939_uxl73eyx4zi.jpg"
-              alt="Test lazy loading image"
-              width={400}
-              height={300}
-              className="rounded-lg"
+              media={{
+                id: 'test-lazy-image',
+                url: '/assets/hero/1752750261939_uxl73eyx4zi.jpg',
+                type: 'image',
+                alt: 'Test lazy loading image',
+                objectFit: 'cover',
+                loading: 'lazy'
+              }}
+              className="rounded-lg w-full h-64"
               quality={80}
               onLoad={() => console.log('Lazy image loaded')}
             />
           </div>
           <div>
-            <h3 className="font-medium mb-2">Responsive Optimized Image</h3>
-            <ResponsiveImage
-              src="/assets/hero/1753082650747_1k3s7j3kf1y.png"
-              alt="Test responsive image"
-              width={400}
-              height={300}
+            <h3 className="font-medium mb-2">Priority Lazy Image</h3>
+            <LazyImage
+              media={{
+                id: 'test-priority-image',
+                url: '/assets/hero/1753082650747_1k3s7j3kf1y.png',
+                type: 'image',
+                alt: 'Test priority image',
+                objectFit: 'cover',
+                loading: 'eager'
+              }}
               className="rounded-lg"
-              priority={false}
-              onLoad={() => console.log('Responsive image loaded')}
+              priority={true}
+              onLoad={() => console.log('Priority image loaded')}
             />
           </div>
         </div>

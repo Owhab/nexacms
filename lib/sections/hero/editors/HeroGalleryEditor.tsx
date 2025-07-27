@@ -340,7 +340,7 @@ export function HeroGalleryEditor(props: HeroEditorProps<HeroGalleryProps>) {
     }
 
     // Create a wrapper component that matches the expected interface
-    const PreviewWrapper = ({ props: previewProps }: { props: HeroGalleryProps }) => (
+    const PreviewWrapper = (previewProps: HeroGalleryProps & { isPreview?: boolean; previewMode?: 'mobile' | 'tablet' | 'desktop' }) => (
         <HeroGalleryPreview {...previewProps} />
     )
 
@@ -401,6 +401,8 @@ export function HeroGalleryEditor(props: HeroEditorProps<HeroGalleryProps>) {
                                                 src={item.image.url}
                                                 alt={item.image.alt || ''}
                                                 className="w-16 h-16 object-cover rounded border"
+                                                width={item.image.width || 64}
+                                                height={item.image.height || 64}
                                             />
                                         ) : (
                                             <div className="w-16 h-16 bg-gray-200 rounded border flex items-center justify-center">

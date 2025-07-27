@@ -395,7 +395,7 @@ export function HeroCTAEditor(props: HeroEditorProps<HeroCTAProps>) {
     }
 
     // Create a wrapper component that matches the expected interface
-    const PreviewWrapper = ({ props: previewProps }: { props: HeroCTAProps }) => (
+    const PreviewWrapper = (previewProps: HeroCTAProps & { isPreview?: boolean; previewMode?: 'mobile' | 'tablet' | 'desktop' }) => (
         <HeroCTAPreview {...previewProps} />
     )
 

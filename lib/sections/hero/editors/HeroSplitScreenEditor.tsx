@@ -351,7 +351,7 @@ export function HeroSplitScreenEditor(props: HeroEditorProps<HeroSplitScreenProp
     }
 
     // Create a wrapper component that matches the expected interface
-    const PreviewWrapper = ({ props: previewProps }: { props: HeroSplitScreenProps }) => (
+    const PreviewWrapper = (previewProps: HeroSplitScreenProps & { isPreview?: boolean; previewMode?: 'mobile' | 'tablet' | 'desktop' }) => (
         <HeroSplitScreenPreview {...previewProps} />
     )
 

@@ -211,6 +211,8 @@ function FeatureCard({ feature, layout }: FeatureCardProps) {
                         src={feature.image.url}
                         alt={feature.image.alt || feature.title}
                         className="w-16 h-16 mx-auto rounded-lg object-cover"
+                        width={feature.image.width || 64}
+                        height={feature.image.height || 64}
                         loading="lazy"
                     />
                 </div>

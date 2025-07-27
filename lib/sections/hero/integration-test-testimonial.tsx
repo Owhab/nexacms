@@ -281,6 +281,8 @@ export function HeroTestimonialIntegrationTest() {
                                             src={testimonial.avatar.url}
                                             alt={testimonial.avatar.alt || 'Testimonial avatar'}
                                             className="w-8 h-8 rounded-full object-cover"
+                                            width={testimonial.avatar.width || 32}
+                                            height={testimonial.avatar.height || 32}
                                         />
                                     )}
                                     <div>

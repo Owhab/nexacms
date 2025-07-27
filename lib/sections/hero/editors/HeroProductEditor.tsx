@@ -273,7 +273,7 @@ export function HeroProductEditor(props: HeroEditorProps<HeroProductProps>) {
     }
 
     // Create a wrapper component that matches the expected interface
-    const PreviewWrapper = ({ props: previewProps }: { props: HeroProductProps }) => (
+    const PreviewWrapper = (previewProps: HeroProductProps & { isPreview?: boolean; previewMode?: 'mobile' | 'tablet' | 'desktop' }) => (
         <HeroProductPreview {...previewProps} />
     )
 
@@ -490,6 +490,8 @@ function ProductInfoEditor({ product, onChange }: ProductInfoEditorProps) {
                                                 src={image.url}
                                                 alt={image.alt || `Product image ${index + 1}`}
                                                 className="w-full h-full object-cover"
+                                                width={image.width || 200}
+                                                height={image.height || 200}
                                             />
                                         </div>
                                         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
