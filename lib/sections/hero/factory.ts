@@ -1,498 +1,587 @@
-import React from 'react'
+import React from "react";
 import {
-    HeroVariant,
-    HeroProps,
-    HeroSectionConfig,
-    HeroEditorProps,
-    HeroPreviewProps
-} from './types'
-import { HERO_SECTION_REGISTRY } from './registry'
-import { 
-    lazyLoadHeroVariant, 
-    lazyLoadHeroEditor, 
-    lazyLoadHeroPreview,
-    HeroPerformanceMonitor
-} from './performance'
+  HeroVariant,
+  HeroProps,
+  HeroSectionConfig,
+  HeroEditorProps,
+  HeroPreviewProps,
+} from "./types";
+import { HERO_SECTION_REGISTRY } from "./registry";
+import {
+  lazyLoadHeroVariant,
+  lazyLoadHeroEditor,
+  lazyLoadHeroPreview,
+  HeroPerformanceMonitor,
+} from "./performance";
 
 /**
  * Hero Section Factory
- * 
+ *
  * Provides dynamic component loading for hero section variants, editors, and previews.
  * Implements lazy loading for performance optimization and supports hot-swapping of components.
  */
 export class HeroSectionFactory {
-    private static componentCache = new Map<string, React.ComponentType<any>>()
-    private static loadingPromises = new Map<string, Promise<React.ComponentType<any>>>()
+  private static componentCache = new Map<string, React.ComponentType<any>>();
+  private static loadingPromises = new Map<
+    string,
+    Promise<React.ComponentType<any>>
+  >();
 
-    /**
-     * Get hero section configuration by variant
-     */
-    static getConfig(variant: HeroVariant): HeroSectionConfig | undefined {
-        return Object.values(HERO_SECTION_REGISTRY).find(config => config.variant === variant)
+  /**
+   * Get hero section configuration by variant
+   */
+  static getConfig(variant: HeroVariant): HeroSectionConfig | undefined {
+    return Object.values(HERO_SECTION_REGISTRY).find(
+      (config) => config.variant === variant,
+    );
+  }
+
+  /**
+   * Get all available hero section configurations
+   */
+  static getAllConfigs(): HeroSectionConfig[] {
+    return Object.values(HERO_SECTION_REGISTRY).filter(
+      (config) => config.isActive,
+    );
+  }
+
+  /**
+   * Get hero section configurations by category or tag
+   */
+  static getConfigsByTag(tag: string): HeroSectionConfig[] {
+    return Object.values(HERO_SECTION_REGISTRY).filter(
+      (config) => config.isActive && config.tags.includes(tag),
+    );
+  }
+
+  /**
+   * Dynamically load hero section component
+   */
+  static async loadComponent(
+    variant: HeroVariant,
+  ): Promise<React.ComponentType<HeroProps> | null> {
+    const cacheKey = `component-${variant}`;
+
+    // Return cached component if available
+    if (this.componentCache.has(cacheKey)) {
+      return this.componentCache.get(cacheKey)!;
     }
 
-    /**
-     * Get all available hero section configurations
-     */
-    static getAllConfigs(): HeroSectionConfig[] {
-        return Object.values(HERO_SECTION_REGISTRY).filter(config => config.isActive)
+    // Return existing loading promise if in progress
+    if (this.loadingPromises.has(cacheKey)) {
+      return this.loadingPromises.get(cacheKey)!;
     }
 
-    /**
-     * Get hero section configurations by category or tag
-     */
-    static getConfigsByTag(tag: string): HeroSectionConfig[] {
-        return Object.values(HERO_SECTION_REGISTRY).filter(config =>
-            config.isActive && config.tags.includes(tag)
-        )
+    // Create loading promise
+    const loadingPromise = this.loadComponentInternal(variant);
+    this.loadingPromises.set(cacheKey, loadingPromise);
+
+    try {
+      const component = await loadingPromise;
+      this.componentCache.set(cacheKey, component);
+      this.loadingPromises.delete(cacheKey);
+      return component;
+    } catch (error) {
+      this.loadingPromises.delete(cacheKey);
+      console.error(
+        `Failed to load hero component for variant: ${variant}`,
+        error,
+      );
+      return null;
+    }
+  }
+
+  /**
+   * Dynamically load hero section editor component
+   */
+  static async loadEditor(
+    variant: HeroVariant,
+  ): Promise<React.ComponentType<HeroEditorProps> | null> {
+    const cacheKey = `editor-${variant}`;
+
+    // Return cached component if available
+    if (this.componentCache.has(cacheKey)) {
+      return this.componentCache.get(cacheKey)!;
     }
 
-    /**
-     * Dynamically load hero section component
-     */
-    static async loadComponent(variant: HeroVariant): Promise<React.ComponentType<HeroProps> | null> {
-        const cacheKey = `component-${variant}`
+    // Return existing loading promise if in progress
+    if (this.loadingPromises.has(cacheKey)) {
+      return this.loadingPromises.get(cacheKey)!;
+    }
 
-        // Return cached component if available
-        if (this.componentCache.has(cacheKey)) {
-            return this.componentCache.get(cacheKey)!
-        }
+    // Create loading promise
+    const loadingPromise = this.loadEditorInternal(variant);
+    this.loadingPromises.set(cacheKey, loadingPromise);
 
-        // Return existing loading promise if in progress
-        if (this.loadingPromises.has(cacheKey)) {
-            return this.loadingPromises.get(cacheKey)!
-        }
+    try {
+      const component = await loadingPromise;
+      this.componentCache.set(cacheKey, component);
+      this.loadingPromises.delete(cacheKey);
+      return component;
+    } catch (error) {
+      this.loadingPromises.delete(cacheKey);
+      console.error(
+        `Failed to load hero editor for variant: ${variant}`,
+        error,
+      );
+      return null;
+    }
+  }
 
-        // Create loading promise
-        const loadingPromise = this.loadComponentInternal(variant)
-        this.loadingPromises.set(cacheKey, loadingPromise)
+  /**
+   * Dynamically load hero section preview component
+   */
+  static async loadPreview(
+    variant: HeroVariant,
+  ): Promise<React.ComponentType<HeroPreviewProps> | null> {
+    const cacheKey = `preview-${variant}`;
 
+    // Return cached component if available
+    if (this.componentCache.has(cacheKey)) {
+      return this.componentCache.get(cacheKey)!;
+    }
+
+    // Return existing loading promise if in progress
+    if (this.loadingPromises.has(cacheKey)) {
+      return this.loadingPromises.get(cacheKey)!;
+    }
+
+    // Create loading promise
+    const loadingPromise = this.loadPreviewInternal(variant);
+    this.loadingPromises.set(cacheKey, loadingPromise);
+
+    try {
+      const component = await loadingPromise;
+      this.componentCache.set(cacheKey, component);
+      this.loadingPromises.delete(cacheKey);
+      return component;
+    } catch (error) {
+      this.loadingPromises.delete(cacheKey);
+      console.error(
+        `Failed to load hero preview for variant: ${variant}`,
+        error,
+      );
+      return null;
+    }
+  }
+
+  /**
+   * Create a lazy-loaded React component for a hero variant
+   */
+  static createLazyComponent(
+    variant: HeroVariant,
+  ): React.ComponentType<HeroProps> {
+    return React.lazy(async () => {
+      const component = await this.loadComponent(variant);
+      if (!component) {
+        throw new Error(`Hero component not found for variant: ${variant}`);
+      }
+      return { default: component };
+    });
+  }
+
+  /**
+   * Create a lazy-loaded React editor component for a hero variant
+   */
+  static createLazyEditor(
+    variant: HeroVariant,
+  ): React.ComponentType<HeroEditorProps> {
+    return React.lazy(async () => {
+      const component = await this.loadEditor(variant);
+      if (!component) {
+        throw new Error(`Hero editor not found for variant: ${variant}`);
+      }
+      return { default: component };
+    });
+  }
+
+  /**
+   * Create a lazy-loaded React preview component for a hero variant
+   */
+  static createLazyPreview(
+    variant: HeroVariant,
+  ): React.ComponentType<HeroPreviewProps> {
+    return React.lazy(async () => {
+      const component = await this.loadPreview(variant);
+      if (!component) {
+        throw new Error(`Hero preview not found for variant: ${variant}`);
+      }
+      return { default: component };
+    });
+  }
+
+  /**
+   * Preload components for better performance
+   */
+  static async preloadComponents(variants: HeroVariant[]): Promise<void> {
+    const promises = variants.flatMap((variant) => [
+      this.loadComponent(variant),
+      this.loadEditor(variant),
+      this.loadPreview(variant),
+    ]);
+
+    await Promise.allSettled(promises);
+  }
+
+  /**
+   * Clear component cache (useful for development/hot reloading)
+   */
+  static clearCache(): void {
+    this.componentCache.clear();
+    this.loadingPromises.clear();
+  }
+
+  /**
+   * Get cache statistics
+   */
+  static getCacheStats() {
+    return {
+      cachedComponents: this.componentCache.size,
+      loadingPromises: this.loadingPromises.size,
+      cacheKeys: Array.from(this.componentCache.keys()),
+    };
+  }
+
+  /**
+   * Internal method to load component
+   */
+  private static async loadComponentInternal(
+    variant: HeroVariant,
+  ): Promise<React.ComponentType<HeroProps>> {
+    const monitor = new HeroPerformanceMonitor();
+
+    return monitor.measureAsyncOperation(
+      `load-component-${variant}`,
+      (async () => {
         try {
-            const component = await loadingPromise
-            this.componentCache.set(cacheKey, component)
-            this.loadingPromises.delete(cacheKey)
-            return component
+          // Load the actual component module directly instead of using lazy loading
+          switch (variant) {
+            case HeroVariant.CENTERED:
+              const { HeroCentered } = await import("./variants/HeroCentered");
+              return HeroCentered as React.ComponentType<HeroProps>;
+            case HeroVariant.SPLIT_SCREEN:
+              const { HeroSplitScreen } =
+                await import("./variants/HeroSplitScreen");
+              return HeroSplitScreen as React.ComponentType<HeroProps>;
+            case HeroVariant.VIDEO:
+              const { HeroVideo } = await import("./variants/HeroVideo");
+              return HeroVideo as React.ComponentType<HeroProps>;
+            case HeroVariant.MINIMAL:
+              const { HeroMinimal } = await import("./variants/HeroMinimal");
+              return HeroMinimal as React.ComponentType<HeroProps>;
+            case HeroVariant.FEATURE:
+              const { HeroFeature } = await import("./variants/HeroFeature");
+              return HeroFeature as React.ComponentType<HeroProps>;
+            case HeroVariant.TESTIMONIAL:
+              const { HeroTestimonial } =
+                await import("./variants/HeroTestimonial");
+              return HeroTestimonial as React.ComponentType<HeroProps>;
+            case HeroVariant.PRODUCT:
+              const { HeroProduct } = await import("./variants/HeroProduct");
+              return HeroProduct as React.ComponentType<HeroProps>;
+            case HeroVariant.SERVICE:
+              const { HeroService } = await import("./variants/HeroService");
+              return HeroService as React.ComponentType<HeroProps>;
+            case HeroVariant.CTA:
+              const { HeroCTA } = await import("./variants/HeroCTA");
+              return HeroCTA as React.ComponentType<HeroProps>;
+            case HeroVariant.GALLERY:
+              const { HeroGallery } = await import("./variants/HeroGallery");
+              return HeroGallery as React.ComponentType<HeroProps>;
+            default:
+              const { HeroCentered: DefaultHero } =
+                await import("./variants/HeroCentered");
+              return DefaultHero as React.ComponentType<HeroProps>;
+          }
         } catch (error) {
-            this.loadingPromises.delete(cacheKey)
-            console.error(`Failed to load hero component for variant: ${variant}`, error)
-            return null
+          // Fallback to base component if specific variant not found
+          console.warn(
+            `Specific component not found for ${variant}, using base component`,
+          );
+          const { BaseHeroSection } = await import("./base/BaseHeroSection");
+
+          // Create a wrapper that matches the expected interface
+          const FallbackComponent = (props: HeroProps) => {
+            const baseProps = {
+              ...props,
+              children: React.createElement(
+                "div",
+                {
+                  className: "p-8 text-center",
+                },
+                `Hero variant "${variant}" not implemented`,
+              ),
+            };
+            return React.createElement(BaseHeroSection, baseProps);
+          };
+
+          return FallbackComponent;
         }
-    }
+      })(),
+    );
+  }
 
-    /**
-     * Dynamically load hero section editor component
-     */
-    static async loadEditor(variant: HeroVariant): Promise<React.ComponentType<HeroEditorProps> | null> {
-        const cacheKey = `editor-${variant}`
+  /**
+   * Internal method to load editor
+   */
+  private static async loadEditorInternal(
+    variant: HeroVariant,
+  ): Promise<React.ComponentType<HeroEditorProps>> {
+    const monitor = new HeroPerformanceMonitor();
 
-        // Return cached component if available
-        if (this.componentCache.has(cacheKey)) {
-            return this.componentCache.get(cacheKey)!
-        }
-
-        // Return existing loading promise if in progress
-        if (this.loadingPromises.has(cacheKey)) {
-            return this.loadingPromises.get(cacheKey)!
-        }
-
-        // Create loading promise
-        const loadingPromise = this.loadEditorInternal(variant)
-        this.loadingPromises.set(cacheKey, loadingPromise)
-
+    return monitor.measureAsyncOperation(
+      `load-editor-${variant}`,
+      (async () => {
         try {
-            const component = await loadingPromise
-            this.componentCache.set(cacheKey, component)
-            this.loadingPromises.delete(cacheKey)
-            return component
+          // Load the actual editor module directly instead of using lazy loading
+          switch (variant) {
+            case HeroVariant.CENTERED:
+              const { HeroCenteredEditor } =
+                await import("./editors/HeroCenteredEditor");
+              return HeroCenteredEditor as React.ComponentType<HeroEditorProps>;
+            case HeroVariant.SPLIT_SCREEN:
+              const { HeroSplitScreenEditor } =
+                await import("./editors/HeroSplitScreenEditor");
+              return HeroSplitScreenEditor as React.ComponentType<HeroEditorProps>;
+            case HeroVariant.VIDEO:
+              const { HeroVideoEditor } =
+                await import("./editors/HeroVideoEditor");
+              return HeroVideoEditor as React.ComponentType<HeroEditorProps>;
+            case HeroVariant.MINIMAL:
+              const { HeroMinimalEditor } =
+                await import("./editors/HeroMinimalEditor");
+              return HeroMinimalEditor as React.ComponentType<HeroEditorProps>;
+            case HeroVariant.FEATURE:
+              const { HeroFeatureEditor } =
+                await import("./editors/HeroFeatureEditor");
+              return HeroFeatureEditor as React.ComponentType<HeroEditorProps>;
+            case HeroVariant.TESTIMONIAL:
+              const { HeroTestimonialEditor } =
+                await import("./editors/HeroTestimonialEditor");
+              return HeroTestimonialEditor as React.ComponentType<HeroEditorProps>;
+            case HeroVariant.PRODUCT:
+              const { HeroProductEditor } =
+                await import("./editors/HeroProductEditor");
+              return HeroProductEditor as React.ComponentType<HeroEditorProps>;
+            case HeroVariant.SERVICE:
+              const { HeroServiceEditor } =
+                await import("./editors/HeroServiceEditor");
+              return HeroServiceEditor as React.ComponentType<HeroEditorProps>;
+            case HeroVariant.CTA:
+              const { HeroCTAEditor } = await import("./editors/HeroCTAEditor");
+              return HeroCTAEditor as React.ComponentType<HeroEditorProps>;
+            case HeroVariant.GALLERY:
+              const { HeroGalleryEditor } =
+                await import("./editors/HeroGalleryEditor");
+              return HeroGalleryEditor as React.ComponentType<HeroEditorProps>;
+            default:
+              const { HeroCenteredEditor: DefaultEditor } =
+                await import("./editors/HeroCenteredEditor");
+              return DefaultEditor as React.ComponentType<HeroEditorProps>;
+          }
         } catch (error) {
-            this.loadingPromises.delete(cacheKey)
-            console.error(`Failed to load hero editor for variant: ${variant}`, error)
-            return null
+          // Fallback to base editor if specific variant not found
+          console.warn(
+            `Specific editor not found for ${variant}, using base editor`,
+          );
+          const { BaseHeroEditor } = await import("./editors/BaseHeroEditor");
+          return BaseHeroEditor as React.ComponentType<HeroEditorProps>;
         }
-    }
+      })(),
+    );
+  }
 
-    /**
-     * Dynamically load hero section preview component
-     */
-    static async loadPreview(variant: HeroVariant): Promise<React.ComponentType<HeroPreviewProps> | null> {
-        const cacheKey = `preview-${variant}`
+  /**
+   * Internal method to load preview
+   */
+  private static async loadPreviewInternal(
+    variant: HeroVariant,
+  ): Promise<React.ComponentType<HeroPreviewProps>> {
+    const monitor = new HeroPerformanceMonitor();
 
-        // Return cached component if available
-        if (this.componentCache.has(cacheKey)) {
-            return this.componentCache.get(cacheKey)!
-        }
-
-        // Return existing loading promise if in progress
-        if (this.loadingPromises.has(cacheKey)) {
-            return this.loadingPromises.get(cacheKey)!
-        }
-
-        // Create loading promise
-        const loadingPromise = this.loadPreviewInternal(variant)
-        this.loadingPromises.set(cacheKey, loadingPromise)
-
+    return monitor.measureAsyncOperation(
+      `load-preview-${variant}`,
+      (async () => {
         try {
-            const component = await loadingPromise
-            this.componentCache.set(cacheKey, component)
-            this.loadingPromises.delete(cacheKey)
-            return component
+          // Load the actual preview module directly instead of using lazy loading
+          switch (variant) {
+            case HeroVariant.CENTERED:
+              const { HeroCenteredPreview } =
+                await import("./previews/HeroCenteredPreview");
+              return HeroCenteredPreview as React.ComponentType<HeroPreviewProps>;
+            case HeroVariant.SPLIT_SCREEN:
+              const { HeroSplitScreenPreview } =
+                await import("./previews/HeroSplitScreenPreview");
+              return HeroSplitScreenPreview as React.ComponentType<HeroPreviewProps>;
+            case HeroVariant.VIDEO:
+              const { HeroVideoPreview } =
+                await import("./previews/HeroVideoPreview");
+              return HeroVideoPreview as React.ComponentType<HeroPreviewProps>;
+            case HeroVariant.MINIMAL:
+              const { HeroMinimalPreview } =
+                await import("./previews/HeroMinimalPreview");
+              return HeroMinimalPreview as React.ComponentType<HeroPreviewProps>;
+            case HeroVariant.FEATURE:
+              const { HeroFeaturePreview } =
+                await import("./previews/HeroFeaturePreview");
+              return HeroFeaturePreview as React.ComponentType<HeroPreviewProps>;
+            case HeroVariant.TESTIMONIAL:
+              const { HeroTestimonialPreview } =
+                await import("./previews/HeroTestimonialPreview");
+              return HeroTestimonialPreview as React.ComponentType<HeroPreviewProps>;
+            case HeroVariant.PRODUCT:
+              const { HeroProductPreview } =
+                await import("./previews/HeroProductPreview");
+              return HeroProductPreview as React.ComponentType<HeroPreviewProps>;
+            case HeroVariant.SERVICE:
+              const { HeroServicePreview } =
+                await import("./previews/HeroServicePreview");
+              return HeroServicePreview as React.ComponentType<HeroPreviewProps>;
+            case HeroVariant.CTA:
+              const { HeroCTAPreview } =
+                await import("./previews/HeroCTAPreview");
+              return HeroCTAPreview as React.ComponentType<HeroPreviewProps>;
+            case HeroVariant.GALLERY:
+              const { HeroGalleryPreview } =
+                await import("./previews/HeroGalleryPreview");
+              return HeroGalleryPreview as React.ComponentType<HeroPreviewProps>;
+            default:
+              const { HeroCenteredPreview: DefaultPreview } =
+                await import("./previews/HeroCenteredPreview");
+              return DefaultPreview as React.ComponentType<HeroPreviewProps>;
+          }
         } catch (error) {
-            this.loadingPromises.delete(cacheKey)
-            console.error(`Failed to load hero preview for variant: ${variant}`, error)
-            return null
+          // Fallback to base preview if specific variant not found
+          console.warn(
+            `Specific preview not found for ${variant}, using base preview`,
+          );
+          const { BaseHeroPreview } =
+            await import("./previews/BaseHeroPreview");
+
+          // Create a wrapper that matches the expected interface
+          const FallbackPreview = (props: HeroPreviewProps) => {
+            const baseProps = {
+              ...props,
+              children: React.createElement(
+                "div",
+                {
+                  className: "p-8 text-center",
+                },
+                `Hero preview for variant "${variant}" not implemented`,
+              ),
+            };
+            return React.createElement(BaseHeroPreview, baseProps);
+          };
+
+          return FallbackPreview;
         }
-    }
+      })(),
+    );
+  }
 
-    /**
-     * Create a lazy-loaded React component for a hero variant
-     */
-    static createLazyComponent(variant: HeroVariant): React.ComponentType<HeroProps> {
-        return React.lazy(async () => {
-            const component = await this.loadComponent(variant)
-            if (!component) {
-                throw new Error(`Hero component not found for variant: ${variant}`)
-            }
-            return { default: component }
-        })
-    }
+  /**
+   * Get component name from variant
+   */
+  private static getComponentName(variant: HeroVariant): string {
+    const baseName = variant
+      .split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join("");
+    return `Hero${baseName}`;
+  }
 
-    /**
-     * Create a lazy-loaded React editor component for a hero variant
-     */
-    static createLazyEditor(variant: HeroVariant): React.ComponentType<HeroEditorProps> {
-        return React.lazy(async () => {
-            const component = await this.loadEditor(variant)
-            if (!component) {
-                throw new Error(`Hero editor not found for variant: ${variant}`)
-            }
-            return { default: component }
-        })
-    }
+  /**
+   * Get editor name from variant
+   */
+  private static getEditorName(variant: HeroVariant): string {
+    return `${this.getComponentName(variant)}Editor`;
+  }
 
-    /**
-     * Create a lazy-loaded React preview component for a hero variant
-     */
-    static createLazyPreview(variant: HeroVariant): React.ComponentType<HeroPreviewProps> {
-        return React.lazy(async () => {
-            const component = await this.loadPreview(variant)
-            if (!component) {
-                throw new Error(`Hero preview not found for variant: ${variant}`)
-            }
-            return { default: component }
-        })
-    }
-
-    /**
-     * Preload components for better performance
-     */
-    static async preloadComponents(variants: HeroVariant[]): Promise<void> {
-        const promises = variants.flatMap(variant => [
-            this.loadComponent(variant),
-            this.loadEditor(variant),
-            this.loadPreview(variant)
-        ])
-
-        await Promise.allSettled(promises)
-    }
-
-    /**
-     * Clear component cache (useful for development/hot reloading)
-     */
-    static clearCache(): void {
-        this.componentCache.clear()
-        this.loadingPromises.clear()
-    }
-
-    /**
-     * Get cache statistics
-     */
-    static getCacheStats() {
-        return {
-            cachedComponents: this.componentCache.size,
-            loadingPromises: this.loadingPromises.size,
-            cacheKeys: Array.from(this.componentCache.keys())
-        }
-    }
-
-    /**
-     * Internal method to load component
-     */
-    private static async loadComponentInternal(variant: HeroVariant): Promise<React.ComponentType<HeroProps>> {
-        const monitor = new HeroPerformanceMonitor()
-        
-        return monitor.measureAsyncOperation(`load-component-${variant}`, (async () => {
-            try {
-                // Load the actual component module directly instead of using lazy loading
-                switch (variant) {
-                    case HeroVariant.CENTERED:
-                        const { HeroCentered } = await import('./variants/HeroCentered')
-                        return HeroCentered
-                    case HeroVariant.SPLIT_SCREEN:
-                        const { HeroSplitScreen } = await import('./variants/HeroSplitScreen')
-                        return HeroSplitScreen
-                    case HeroVariant.VIDEO:
-                        const { HeroVideo } = await import('./variants/HeroVideo')
-                        return HeroVideo
-                    case HeroVariant.MINIMAL:
-                        const { HeroMinimal } = await import('./variants/HeroMinimal')
-                        return HeroMinimal
-                    case HeroVariant.FEATURE:
-                        const { HeroFeature } = await import('./variants/HeroFeature')
-                        return HeroFeature
-                    case HeroVariant.TESTIMONIAL:
-                        const { HeroTestimonial } = await import('./variants/HeroTestimonial')
-                        return HeroTestimonial
-                    case HeroVariant.PRODUCT:
-                        const { HeroProduct } = await import('./variants/HeroProduct')
-                        return HeroProduct
-                    case HeroVariant.SERVICE:
-                        const { HeroService } = await import('./variants/HeroService')
-                        return HeroService
-                    case HeroVariant.CTA:
-                        const { HeroCTA } = await import('./variants/HeroCTA')
-                        return HeroCTA
-                    case HeroVariant.GALLERY:
-                        const { HeroGallery } = await import('./variants/HeroGallery')
-                        return HeroGallery
-                    default:
-                        const { HeroCentered: DefaultHero } = await import('./variants/HeroCentered')
-                        return DefaultHero
-                }
-            } catch (error) {
-                // Fallback to base component if specific variant not found
-                console.warn(`Specific component not found for ${variant}, using base component`)
-                const { BaseHeroSection } = await import('./base/BaseHeroSection')
-
-                // Create a wrapper that matches the expected interface
-                const FallbackComponent = (props: HeroProps) => {
-                    const baseProps = {
-                        ...props,
-                        children: React.createElement('div', {
-                            className: 'p-8 text-center'
-                        }, `Hero variant "${variant}" not implemented`)
-                    }
-                    return React.createElement(BaseHeroSection, baseProps)
-                }
-
-                return FallbackComponent
-            }
-        })())
-    }
-
-    /**
-     * Internal method to load editor
-     */
-    private static async loadEditorInternal(variant: HeroVariant): Promise<React.ComponentType<HeroEditorProps>> {
-        const monitor = new HeroPerformanceMonitor()
-        
-        return monitor.measureAsyncOperation(`load-editor-${variant}`, (async () => {
-            try {
-                // Load the actual editor module directly instead of using lazy loading
-                switch (variant) {
-                    case HeroVariant.CENTERED:
-                        const { HeroCenteredEditor } = await import('./editors/HeroCenteredEditor')
-                        return HeroCenteredEditor
-                    case HeroVariant.SPLIT_SCREEN:
-                        const { HeroSplitScreenEditor } = await import('./editors/HeroSplitScreenEditor')
-                        return HeroSplitScreenEditor
-                    case HeroVariant.VIDEO:
-                        const { HeroVideoEditor } = await import('./editors/HeroVideoEditor')
-                        return HeroVideoEditor
-                    case HeroVariant.MINIMAL:
-                        const { HeroMinimalEditor } = await import('./editors/HeroMinimalEditor')
-                        return HeroMinimalEditor
-                    case HeroVariant.FEATURE:
-                        const { HeroFeatureEditor } = await import('./editors/HeroFeatureEditor')
-                        return HeroFeatureEditor
-                    case HeroVariant.TESTIMONIAL:
-                        const { HeroTestimonialEditor } = await import('./editors/HeroTestimonialEditor')
-                        return HeroTestimonialEditor
-                    case HeroVariant.PRODUCT:
-                        const { HeroProductEditor } = await import('./editors/HeroProductEditor')
-                        return HeroProductEditor
-                    case HeroVariant.SERVICE:
-                        const { HeroServiceEditor } = await import('./editors/HeroServiceEditor')
-                        return HeroServiceEditor
-                    case HeroVariant.CTA:
-                        const { HeroCTAEditor } = await import('./editors/HeroCTAEditor')
-                        return HeroCTAEditor
-                    case HeroVariant.GALLERY:
-                        const { HeroGalleryEditor } = await import('./editors/HeroGalleryEditor')
-                        return HeroGalleryEditor
-                    default:
-                        const { HeroCenteredEditor: DefaultEditor } = await import('./editors/HeroCenteredEditor')
-                        return DefaultEditor
-                }
-            } catch (error) {
-                // Fallback to base editor if specific variant not found
-                console.warn(`Specific editor not found for ${variant}, using base editor`)
-                const { BaseHeroEditor } = await import('./editors/BaseHeroEditor')
-                return BaseHeroEditor as React.ComponentType<HeroEditorProps>
-            }
-        })())
-    }
-
-    /**
-     * Internal method to load preview
-     */
-    private static async loadPreviewInternal(variant: HeroVariant): Promise<React.ComponentType<HeroPreviewProps>> {
-        const monitor = new HeroPerformanceMonitor()
-        
-        return monitor.measureAsyncOperation(`load-preview-${variant}`, (async () => {
-            try {
-                // Load the actual preview module directly instead of using lazy loading
-                switch (variant) {
-                    case HeroVariant.CENTERED:
-                        const { HeroCenteredPreview } = await import('./previews/HeroCenteredPreview')
-                        return HeroCenteredPreview
-                    case HeroVariant.SPLIT_SCREEN:
-                        const { HeroSplitScreenPreview } = await import('./previews/HeroSplitScreenPreview')
-                        return HeroSplitScreenPreview
-                    case HeroVariant.VIDEO:
-                        const { HeroVideoPreview } = await import('./previews/HeroVideoPreview')
-                        return HeroVideoPreview
-                    case HeroVariant.MINIMAL:
-                        const { HeroMinimalPreview } = await import('./previews/HeroMinimalPreview')
-                        return HeroMinimalPreview
-                    case HeroVariant.FEATURE:
-                        const { HeroFeaturePreview } = await import('./previews/HeroFeaturePreview')
-                        return HeroFeaturePreview
-                    case HeroVariant.TESTIMONIAL:
-                        const { HeroTestimonialPreview } = await import('./previews/HeroTestimonialPreview')
-                        return HeroTestimonialPreview
-                    case HeroVariant.PRODUCT:
-                        const { HeroProductPreview } = await import('./previews/HeroProductPreview')
-                        return HeroProductPreview
-                    case HeroVariant.SERVICE:
-                        const { HeroServicePreview } = await import('./previews/HeroServicePreview')
-                        return HeroServicePreview
-                    case HeroVariant.CTA:
-                        const { HeroCTAPreview } = await import('./previews/HeroCTAPreview')
-                        return HeroCTAPreview
-                    case HeroVariant.GALLERY:
-                        const { HeroGalleryPreview } = await import('./previews/HeroGalleryPreview')
-                        return HeroGalleryPreview
-                    default:
-                        const { HeroCenteredPreview: DefaultPreview } = await import('./previews/HeroCenteredPreview')
-                        return DefaultPreview
-                }
-            } catch (error) {
-                // Fallback to base preview if specific variant not found
-                console.warn(`Specific preview not found for ${variant}, using base preview`)
-                const { BaseHeroPreview } = await import('./previews/BaseHeroPreview')
-
-                // Create a wrapper that matches the expected interface
-                const FallbackPreview = (props: HeroPreviewProps) => {
-                    const baseProps = {
-                        ...props,
-                        children: React.createElement('div', {
-                            className: 'p-8 text-center'
-                        }, `Hero preview for variant "${variant}" not implemented`)
-                    }
-                    return React.createElement(BaseHeroPreview, baseProps)
-                }
-
-                return FallbackPreview
-            }
-        })())
-    }
-
-    /**
-     * Get component name from variant
-     */
-    private static getComponentName(variant: HeroVariant): string {
-        const baseName = variant
-            .split('-')
-            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-            .join('')
-        return `Hero${baseName}`
-    }
-
-    /**
-     * Get editor name from variant
-     */
-    private static getEditorName(variant: HeroVariant): string {
-        return `${this.getComponentName(variant)}Editor`
-    }
-
-    /**
-     * Get preview name from variant
-     */
-    private static getPreviewName(variant: HeroVariant): string {
-        return `${this.getComponentName(variant)}Preview`
-    }
+  /**
+   * Get preview name from variant
+   */
+  private static getPreviewName(variant: HeroVariant): string {
+    return `${this.getComponentName(variant)}Preview`;
+  }
 }
 
 /**
  * React Hook for using hero section factory
  */
 export function useHeroSection(variant: HeroVariant) {
-    const [component, setComponent] = React.useState<React.ComponentType<HeroProps> | null>(null)
-    const [editor, setEditor] = React.useState<React.ComponentType<HeroEditorProps> | null>(null)
-    const [preview, setPreview] = React.useState<React.ComponentType<HeroPreviewProps> | null>(null)
-    const [loading, setLoading] = React.useState(true)
-    const [error, setError] = React.useState<string | null>(null)
+  const [component, setComponent] =
+    React.useState<React.ComponentType<HeroProps> | null>(null);
+  const [editor, setEditor] =
+    React.useState<React.ComponentType<HeroEditorProps> | null>(null);
+  const [preview, setPreview] =
+    React.useState<React.ComponentType<HeroPreviewProps> | null>(null);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
 
-    React.useEffect(() => {
-        let isMounted = true
+  React.useEffect(() => {
+    let isMounted = true;
 
-        const loadComponents = async () => {
-            try {
-                setLoading(true)
-                setError(null)
+    const loadComponents = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-                const [comp, edit, prev] = await Promise.all([
-                    HeroSectionFactory.loadComponent(variant),
-                    HeroSectionFactory.loadEditor(variant),
-                    HeroSectionFactory.loadPreview(variant)
-                ])
+        const [comp, edit, prev] = await Promise.all([
+          HeroSectionFactory.loadComponent(variant),
+          HeroSectionFactory.loadEditor(variant),
+          HeroSectionFactory.loadPreview(variant),
+        ]);
 
-                if (isMounted) {
-                    setComponent(() => comp)
-                    setEditor(() => edit)
-                    setPreview(() => prev)
-                }
-            } catch (err) {
-                if (isMounted) {
-                    setError(err instanceof Error ? err.message : 'Failed to load hero components')
-                }
-            } finally {
-                if (isMounted) {
-                    setLoading(false)
-                }
-            }
+        if (isMounted) {
+          setComponent(() => comp);
+          setEditor(() => edit);
+          setPreview(() => prev);
         }
-
-        loadComponents()
-
-        return () => {
-            isMounted = false
+      } catch (err) {
+        if (isMounted) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Failed to load hero components",
+          );
         }
-    }, [variant])
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
 
-    return {
-        component,
-        editor,
-        preview,
-        loading,
-        error,
-        config: HeroSectionFactory.getConfig(variant)
-    }
+    loadComponents();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [variant]);
+
+  return {
+    component,
+    editor,
+    preview,
+    loading,
+    error,
+    config: HeroSectionFactory.getConfig(variant),
+  };
 }
 
 /**
  * React Hook for preloading hero components
  */
 export function useHeroPreloader(variants: HeroVariant[]) {
-    const [preloaded, setPreloaded] = React.useState(false)
+  const [preloaded, setPreloaded] = React.useState(false);
 
-    React.useEffect(() => {
-        HeroSectionFactory.preloadComponents(variants).then(() => {
-            setPreloaded(true)
-        })
-    }, [variants])
+  React.useEffect(() => {
+    HeroSectionFactory.preloadComponents(variants).then(() => {
+      setPreloaded(true);
+    });
+  }, [variants]);
 
-    return preloaded
+  return preloaded;
 }
 
-export default HeroSectionFactory
+export default HeroSectionFactory;
